@@ -1,0 +1,51 @@
+# Python
+*.py[cod]
+*.pyo
+*.egg-info/
+__pycache__/
+.mypy_cache/
+.ruff_cache/
+.pytest_cache/
+
+# Virtual environments
+.venv/
+venv/
+env/
+
+# Environment
+.env
+
+# Reflex
+.states
+.web
+assets/external/
+
+# IDE
+.idea/
+.vscode/settings.json
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Build / Packaging
+dist/
+build/
+*.egg
+
+# Database / Storage
+*.db
+*.duckdb
+
+# Test
+test/
+test_files/
+
+# Runtime artifacts (parsed images go to temp, but just in case)
+parsed_images/
+
+# Logs
+*.log
