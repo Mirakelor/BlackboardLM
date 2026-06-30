@@ -1,9 +1,14 @@
 import reflex as rx
 from BlackboardLM.state import AppState
+import BlackboardLM.theme as _theme
 
 def star_chart() -> rx.Component:
     return rx.fragment(
-        rx.html(f'<script id="graph-data" type="application/json">{AppState.graph_data_json}</script>'),
+        rx.box(
+            AppState.graph_data_json,
+            id="graph-data",
+            display="none",
+        ),
         rx.box(
             rx.hstack(
                 rx.hstack(
@@ -49,11 +54,11 @@ def star_chart() -> rx.Component:
                 rx.box(
                     id="cy-star-chart",
                     width="100%",
-                    height="100%",
+                    height="180px",
                     style={
-                        "--cy-node-color": AppState.theme["star_chart_node"],
                         "--cy-edge-color": AppState.theme["star_chart_edge"],
                         "--cy-label-color": AppState.theme["text_primary"],
+                        "--cy-outline-color": AppState.theme["star_chart_bg"],
                     },
                 ),
                 width="100%",

@@ -37,6 +37,7 @@ def index() -> rx.Component:
                 max_width=["100%", "100%", "780px", "920px"],
                 margin_x="auto",
                 min_height="0",
+                overflow="hidden",
             ),
             rx.vstack(
                 rx.text(

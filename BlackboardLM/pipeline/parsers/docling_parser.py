@@ -48,6 +48,6 @@ class DoclingParser(BaseParser):
             "metadata": {
                 "source": file_path,
                 "pages": len(result.pages) if result.pages else 0,
-                "source_type": ext or 'unknown',
+                "source_type": _ext or 'unknown',
             }
         }

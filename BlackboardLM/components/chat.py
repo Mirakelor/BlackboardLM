@@ -64,5 +64,6 @@ def chat_area() -> rx.Component:
         flex_direction="column",
         flex="1",
         min_height="0",
+        overflow="hidden",
         width="100%",
     )

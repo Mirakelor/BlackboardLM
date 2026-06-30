@@ -1,5 +1,6 @@
 from dataclasses import asdict
 import asyncio
+import hashlib
 import json
 import tempfile
 from pathlib import Path
@@ -12,6 +13,8 @@ import BlackboardLM.settings as _s
 _rag = RAGEngine()
 _parser = DoclingParser()
 _bg_tasks: set = set()
+_PREVIEW_DIR = Path(tempfile.gettempdir()).joinpath("blackboardlm_previews")
+_PREVIEW_DIR.mkdir(parents=True, exist_ok=True)
 
 class AppState(rx.State):
     uploaded_files: list[str] = []
@@ -22,6 +25,8 @@ class AppState(rx.State):
     expanded_doc: str = ""
     star_chart_visible: bool = True
     graph_data: dict = {}
+    preview_content: str = ""
+    preview_ready: bool = False
 
     @rx.var
     def graph_data_json(self) -> str:
@@ -47,12 +52,23 @@ class AppState(rx.State):
         self.star_chart_visible = not self.star_chart_visible
 
     def toggle_doc_preview(self, filename: str):
-        self.expanded_doc = "" if self.expanded_doc == filename else filename
+        if self.expanded_doc == filename:
+            self.expanded_doc = ""
+            self.preview_content = ""
+            self.preview_ready = False
+        else:
+            self.expanded_doc = filename
+            _hash = hashlib.md5(filename.encode()).hexdigest()[:16]
+            _path = _PREVIEW_DIR.joinpath(f"{_hash}.txt")
+            if _path.exists():
+                _text = _path.read_text(encoding="utf-8")
+                self.preview_content = _text
+                self.preview_ready = True
+            else:
+                self.preview_content = ""
+                self.preview_ready = False
 
     async def on_load(self):
-        _bg_tasks.add(asyncio.create_task(self._startup_background()))
-
-    async def _startup_background(self):
         await _rag.startup()
         await asyncio.sleep(1)
         data = await _rag.get_graph_data()
@@ -76,13 +92,16 @@ class AppState(rx.State):
         _bg_tasks.add(asyncio.create_task(self._parse_and_index(pending)))
 
     async def _parse_and_index(self, pending: list[tuple[str, str]]):
-        loop = asyncio.get_running_loop()
+        _loop = asyncio.get_running_loop()
         for _tmp_path, _filename in pending:
             try:
-                result = await loop.run_in_executor(None, _parser.parse, _tmp_path)
+                result = await _loop.run_in_executor(None, _parser.parse, _tmp_path)
                 full_text = result["text"]
                 for _table in result["tables"]:
                     full_text += "\n" + _table
+                _hash = hashlib.md5(_filename.encode()).hexdigest()[:16]
+                _path = _PREVIEW_DIR.joinpath(f"{_hash}.txt")
+                _path.write_text(full_text, encoding="utf-8")
                 await _rag.insert(full_text)
             finally:
                 Path(_tmp_path).unlink(missing_ok=True)

@@ -154,15 +154,22 @@ def doc_preview(filename: str) -> rx.Component:
             margin_bottom="10px",
         ),
         rx.box(
-            rx.markdown(
-                f"*预览功能开发中...*\n\n点击文档后，此处将展示文档内容并自动定位到与当前对话相关的段落。",
-                color=AppState.theme["text_secondary"],
+            rx.cond(
+                AppState.preview_ready,
+                rx.markdown(
+                    AppState.preview_content,
+                    color=AppState.theme["text_primary"],
+                ),
+                rx.markdown(
+                    AppState.theme["doc_loading_text"],
+                    color=AppState.theme["text_secondary"],
+                ),
             ),
             padding="16px",
             background=AppState.theme["surface_alt"],
             border_radius=AppState.theme["radius"],
             border=AppState.theme["border"],
-            max_height="200px",
+            max_height="360px",
             overflow="auto",
         ),
         padding="12px 16px",

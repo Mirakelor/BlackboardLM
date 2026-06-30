@@ -133,11 +133,6 @@ def global_styles() -> rx.Component:
                 for (var i = 0; i < t.length; i++) { h = t.charCodeAt(i) + ((h << 5) - h); }
                 return 'hsl(' + (Math.abs(h) % 360) + ', 50%, 55%)';
             }
-            function _nodeBaseColor() {
-                var el = document.getElementById('cy-star-chart');
-                if (!el) return '#d4a843';
-                return getComputedStyle(el).getPropertyValue('--cy-node-color') || '#d4a843';
-            }
             function _labelColor() {
                 var el = document.getElementById('cy-star-chart');
                 if (!el) return '#efe0c4';
@@ -147,6 +142,11 @@ def global_styles() -> rx.Component:
                 var el = document.getElementById('cy-star-chart');
                 if (!el) return 'rgba(212,168,67,0.3)';
                 return (getComputedStyle(el).getPropertyValue('--cy-edge-color') || 'rgba(212,168,67,0.3)').trim();
+            }
+            function _outlineColor() {
+                var el = document.getElementById('cy-star-chart');
+                if (!el) return 'rgba(0,0,0,0.5)';
+                return (getComputedStyle(el).getPropertyValue('--cy-outline-color') || 'rgba(0,0,0,0.5)').trim();
             }
             function _build() {
                 var dataEl = document.getElementById('graph-data');
@@ -182,7 +182,7 @@ def global_styles() -> rx.Component:
                         container: container,
                         elements: elements,
                         style: [
-                            { selector: 'node', style: { 'background-color': function(ele) { return _nodeColor(ele.data()); }, 'label': 'data(label)', 'font-size': '8px', 'color': _labelColor(), 'text-valign': 'center', 'text-halign': 'center', 'text-wrap': 'ellipsis', 'text-max-width': '70px', 'width': function(ele) { return 8 + Math.min(ele.data('degree'), 20) * 0.7; }, 'height': function(ele) { return 8 + Math.min(ele.data('degree'), 20) * 0.7; } }},
+                            { selector: 'node', style: { 'background-color': function(ele) { return _nodeColor(ele.data()); }, 'label': 'data(label)', 'font-size': '8px', 'color': _labelColor(), 'text-outline-color': _outlineColor(), 'text-outline-width': 1.5, 'text-valign': 'center', 'text-halign': 'center', 'text-wrap': 'ellipsis', 'text-max-width': '70px', 'width': function(ele) { return 8 + Math.min(ele.data('degree'), 20) * 0.7; }, 'height': function(ele) { return 8 + Math.min(ele.data('degree'), 20) * 0.7; } }},
                             { selector: 'edge', style: { 'width': function(ele) { return 0.5 + Math.min(ele.data('weight') || 1, 5) * 0.6; }, 'line-color': _edgeLineColor(), 'curve-style': 'bezier', 'opacity': 0.4 }}
                         ],
                         layout: { name: 'concentric', animate: false, concentric: function(node) { return node.degree(true); }, minNodeSpacing: 15 },

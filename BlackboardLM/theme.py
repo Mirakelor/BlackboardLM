@@ -43,6 +43,7 @@ class Theme:
     upload_text: str = ""
     upload_hint: str = ""
     doc_add_text: str = ""
+    doc_loading_text: str = ""
     css_extra: str = ""
 
 _hogwarts = Theme(
@@ -87,6 +88,7 @@ _hogwarts = Theme(
     upload_text="拖放或点击上传文档",
     upload_hint="PDF · DOCX · PPTX · TXT · MD",
     doc_add_text="添加文献",
+    doc_loading_text="Unfurling the parchment…",
     css_extra="""
 @keyframes candle-flicker {
     0%, 100% { opacity: 0.12; }
@@ -177,6 +179,7 @@ _sakura = Theme(
     upload_text="拖放或点击上传文档",
     upload_hint="PDF · DOCX · PPTX · TXT · MD",
     doc_add_text="添加文献",
+    doc_loading_text="文書を読み込み中……",
     css_extra="""
 @keyframes sakura-fall {
     0% { transform: translateY(-5vh) rotate(0deg) scale(1); opacity: 0.7; }
