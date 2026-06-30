@@ -1,10 +1,16 @@
 from openai import AsyncOpenAI
+import threading
 import BlackboardLM.settings as _s
 
 if not _s.OPENAI_API_KEY:
     raise ValueError("OPENAI_API_KEY environment variable is not set.")
 
-_client = AsyncOpenAI(api_key=_s.OPENAI_API_KEY, base_url=_s.OPENAI_BASE_URL)
+_local = threading.local()
+
+def _get_client():
+    if not hasattr(_local, "client"):
+        _local.client = AsyncOpenAI(api_key=_s.OPENAI_API_KEY, base_url=_s.OPENAI_BASE_URL)
+    return _local.client
 
 async def get_response(
     messages: list[dict],
@@ -18,16 +24,16 @@ async def get_response(
         "temperature": 0.7,
         "stream": True,
     }
-    body = {}
-    t = thinking or _s.LLM_THINKING
-    if t:
-        body["thinking"] = {"type": t}
-    re = reasoning_effort or _s.LLM_REASONING_EFFORT
-    if re:
-        body["reasoning_effort"] = re
-    if body:
-        kwargs["extra_body"] = body
-    response = await _client.chat.completions.create(**kwargs)
-    async for chunk in response:
-        if chunk.choices[0].delta.content:
-            yield chunk.choices[0].delta.content
+    _body = {}
+    _t = thinking or _s.LLM_THINKING
+    if _t:
+        _body["thinking"] = {"type": _t}
+    _re = reasoning_effort or _s.LLM_REASONING_EFFORT
+    if _re:
+        _body["reasoning_effort"] = _re
+    if _body:
+        kwargs["extra_body"] = _body
+    response = await _get_client().chat.completions.create(**kwargs)
+    async for _chunk in response:
+        if _chunk.choices[0].delta.content:
+            yield _chunk.choices[0].delta.content

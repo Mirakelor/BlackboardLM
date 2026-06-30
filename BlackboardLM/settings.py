@@ -3,6 +3,7 @@ import socket
 import tempfile
 from pathlib import Path
 from dotenv import load_dotenv
+import BlackboardLM.theme as _theme
 
 PROJECT_ROOT = Path(__file__).resolve().parent.parent
 load_dotenv(PROJECT_ROOT.joinpath(".env"))
@@ -20,4 +21,4 @@ OPENAI_BASE_URL = os.environ.get("OPENAI_BASE_URL", "https://api.deepseek.com")
 LLM_MODEL = os.environ.get("LLM_MODEL", "deepseek-v4-flash")
 LLM_THINKING = os.environ.get("LLM_THINKING", "disabled")
 LLM_REASONING_EFFORT = os.environ.get("LLM_REASONING_EFFORT", "max")
-THEME = os.environ.get("THEME", "sakura")
+THEME = os.environ.get("THEME", _theme.THEME_SAKURA)
