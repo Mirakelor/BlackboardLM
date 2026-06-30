@@ -14,3 +14,10 @@ if not os.getenv("HF_ENDPOINT"):
         socket.create_connection(("huggingface.co", 443), timeout=3).close()
     except Exception:
         os.environ["HF_ENDPOINT"] = "https://hf-mirror.com"
+
+OPENAI_API_KEY = os.environ.get("OPENAI_API_KEY")
+OPENAI_BASE_URL = os.environ.get("OPENAI_BASE_URL", "https://api.deepseek.com")
+LLM_MODEL = os.environ.get("LLM_MODEL", "deepseek-v4-flash")
+LLM_THINKING = os.environ.get("LLM_THINKING", "disabled")
+LLM_REASONING_EFFORT = os.environ.get("LLM_REASONING_EFFORT", "max")
+THEME = os.environ.get("THEME", "sakura")
