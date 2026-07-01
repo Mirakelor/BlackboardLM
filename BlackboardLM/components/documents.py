@@ -8,6 +8,10 @@ _ACCEPT = {
     "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet": [".xlsx"],
     "text/plain": [".txt", ".md"],
     "text/html": [".html"],
+    "application/epub+zip": [".epub"],
+    "image/jpeg": [".jpg", ".jpeg"],
+    "image/png": [".png"],
+    "image/tiff": [".tiff", ".tif"],
 }
 
 def _doc_card(filename: str) -> rx.Component:
