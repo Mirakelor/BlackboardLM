@@ -2,47 +2,47 @@ import reflex as rx
 from BlackboardLM.state import AppState
 
 def hogwarts_stars() -> rx.Component:
-    stars = []
+    _stars = []
     for _i in range(50):
-        left = (_i * 37 + 13) % 100
+        _left = (_i * 37 + 13) % 100
         _top = (_i * 53 + 7) % 100
-        delay = (_i * 0.47) % 4
-        duration = 2.0 + (_i % 3) * 0.8
-        is_float = _i % 4 == 0
-        size = (3 + (_i % 4)) if is_float else (2 + (_i % 3))
-        _ani = f"star-twinkle {duration}s ease-in-out {delay}s infinite"
+        _delay = (_i * 0.47) % 4
+        _duration = 2.0 + (_i % 3) * 0.8
+        _is_float = _i % 4 == 0
+        _size = (3 + (_i % 4)) if _is_float else (2 + (_i % 3))
+        _ani = f"star-twinkle {_duration}s ease-in-out {_delay}s infinite"
         if _i % 4 == 0:
-            _ani += f", float-up {duration + 1.5}s ease-out {delay}s infinite"
-        stars.append(
+            _ani += f", float-up {_duration + 1.5}s ease-out {_delay}s infinite"
+        _stars.append(
             rx.box(
                 position="absolute",
-                left=f"{left}%",
+                left=f"{_left}%",
                 top=f"{_top}%",
-                width=f"{size}px",
-                height=f"{size}px",
+                width=f"{_size}px",
+                height=f"{_size}px",
                 background=AppState.theme["star_chart_node"],
                 border_radius="50%",
                 animation=_ani,
             )
         )
     return rx.box(
-        *stars,
+        *_stars,
         class_name="hogwarts-stars",
     )
 
 def sakura_petals() -> rx.Component:
-    petals = []
+    _petals = []
     for _i in range(28):
-        left = (_i * 73 + 17) % 100
-        delay = (_i * 1.3) % 8
-        duration = 6 + (_i % 5)
-        _ani = f"sakura-fall {duration}s linear {delay}s infinite"
+        _left = (_i * 73 + 17) % 100
+        _delay = (_i * 1.3) % 8
+        _duration = 6 + (_i % 5)
+        _ani = f"sakura-fall {_duration}s linear {_delay}s infinite"
         if _i % 2 == 0:
-            _ani += f", sakura-sway {duration * 0.6}s ease-in-out {delay}s infinite"
-        petals.append(
+            _ani += f", sakura-sway {_duration * 0.6}s ease-in-out {_delay}s infinite"
+        _petals.append(
             rx.box(
                 position="absolute",
-                left=f"{left}%",
+                left=f"{_left}%",
                 top="-24px",
                 width="14px",
                 height="14px",
@@ -52,6 +52,6 @@ def sakura_petals() -> rx.Component:
             )
         )
     return rx.box(
-        *petals,
+        *_petals,
         class_name="sakura-petals",
     )

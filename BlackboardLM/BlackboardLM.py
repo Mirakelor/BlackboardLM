@@ -1,4 +1,5 @@
 import reflex as rx
+
 from BlackboardLM.components.layout import index
 
 app = rx.App()

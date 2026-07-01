@@ -1,6 +1,5 @@
 import reflex as rx
 from BlackboardLM.state import AppState
-import BlackboardLM.theme as _theme
 
 def global_styles() -> rx.Component:
     return rx.fragment(
@@ -50,6 +49,7 @@ def global_styles() -> rx.Component:
                 font-size: 10px;
                 margin: auto;
                 animation: 2.74s linear infinite loading-cat;
+                pointer-events: none;
             }}
             .cat * {{ box-sizing: content-box; }}
             .cat .head,
@@ -265,6 +265,8 @@ def global_styles() -> rx.Component:
             
             .rx-Upload {{ padding: 0px !important; border: none !important; }}
             .rx-Upload > div {{ padding: 0px 16px !important; }}
+            .rt-SelectTrigger {{ padding-left: 12px !important; padding-right: 28px !important; }}
+            .rt-SelectItem {{ padding-left: 24px !important; }}
             ::-webkit-scrollbar {{ width: 6px; height: 3px; }}
             ::-webkit-scrollbar-track {{ background: transparent; }}
             ::-webkit-scrollbar-thumb {{
@@ -272,10 +274,15 @@ def global_styles() -> rx.Component:
                 border-radius: 3px;
             }}
             
+            .doc-preview-content ul, .doc-preview-content ol {{
+                padding-left: 1.2em;
+                margin: 0;
+                list-style-position: inside;
+            }}
+            
             @media (max-width: 640px) {{
                 .header-subtitle {{ display: none; }}
                 .header-heading {{ font-size: 18px !important; }}
-                .star-chart-box {{ height: 80px !important; }}
                 .header-bar {{ padding: 10px 14px !important; }}
                 .doc-shelf-scroll > div {{ gap: 8px !important; }}
                 .doc-card {{ min-width: 150px !important; max-width: 150px !important; }}
@@ -290,23 +297,26 @@ def global_styles() -> rx.Component:
         """),
         rx.script("""
         (function initScroll() {
-            var vp = document.querySelector('[data-radix-scroll-area-viewport]');
-            if (!vp) { setTimeout(initScroll, 200); return; }
-            var _auto = false;
-            vp.addEventListener('wheel', function(e) { if (e.deltaY < 0) _auto = false; });
-            vp.addEventListener('touchmove', function() { _auto = false; });
-            new MutationObserver(function(muts) {
-                for (var i = 0; i < muts.length; i++) {
-                    var added = muts[i].addedNodes;
-                    for (var j = 0; j < added.length; j++) {
-                        if (added[j].nodeType === 1 && added[j].querySelector && added[j].querySelector('[data-radix-scroll-area-viewport] .rt-Spinner, .rt-Spinner')) {
-                            _auto = true;
-                        }
+            var _vp = document.getElementById('main-scroll');
+            if (!_vp) { setTimeout(initScroll, 200); return; }
+            var _auto = true;
+            _vp.addEventListener('wheel', function(e) { if (e.deltaY < 0) _auto = false; });
+            _vp.addEventListener('touchmove', function() { _auto = false; });
+            new MutationObserver(function(_muts) {
+                for (var _i = 0; _i < _muts.length; _i++) {
+                    var _added = _muts[_i].addedNodes;
+                    for (var _j = 0; _j < _added.length; _j++) {
+                        var _el = _added[_j];
+                        if (_el.nodeType !== 1) continue;
+                        if (_el.classList && _el.classList.contains('message-row')) { _auto = true; }
+                        if (_el.querySelector && _el.querySelector('.rt-Spinner')) { _auto = true; }
                     }
                 }
-            }).observe(vp, {childList: true, subtree: true});
+            }).observe(document.body, {childList: true, subtree: true});
             setInterval(function() {
-                if (_auto) vp.scrollTop = vp.scrollHeight;
+                if (!_auto) return;
+                var _anchor = document.getElementById('chat-bottom');
+                if (_anchor) _anchor.scrollIntoView({block: 'end', behavior: 'instant'});
             }, 80);
         })();
         """),

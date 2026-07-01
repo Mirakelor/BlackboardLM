@@ -1,13 +1,14 @@
 import reflex as rx
-from BlackboardLM.state import AppState
-import BlackboardLM.theme as _theme
 from BlackboardLM.components.styles import global_styles
-from BlackboardLM.components.header import header
 from BlackboardLM.components.decorations import hogwarts_stars, sakura_petals
-from BlackboardLM.components.star_chart import star_chart
+from BlackboardLM.components.header import header
+from BlackboardLM.components.settings_panel import settings_panel
 from BlackboardLM.components.documents import doc_shelf, doc_preview
+from BlackboardLM.components.star_chart import star_chart
 from BlackboardLM.components.chat import chat_area
 from BlackboardLM.components.input_bar import input_bar
+from BlackboardLM.state import AppState
+import BlackboardLM.config.theme as _theme
 
 def index() -> rx.Component:
     return rx.fragment(
@@ -39,6 +40,7 @@ def index() -> rx.Component:
                 sakura_petals(),
             ),
             header(),
+            settings_panel(),
             rx.flex(
                 doc_shelf(),
                 rx.box(
@@ -57,7 +59,9 @@ def index() -> rx.Component:
                 max_width=["100%", "100%", "780px", "920px"],
                 margin_x="auto",
                 min_height="0",
-                overflow="hidden",
+                overflow_y="auto",
+                overflow_x="hidden",
+                id="main-scroll",
             ),
             rx.vstack(
                 rx.text(

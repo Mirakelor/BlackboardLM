@@ -1,3 +1,11 @@
+import os
+from pathlib import Path
+
+os.environ.setdefault(
+    "REFLEX_HOT_RELOAD_EXCLUDE_PATHS",
+    str(Path(__file__).resolve().parent.joinpath(".env")),
+)
+
 import reflex as rx
 
 config = rx.Config(

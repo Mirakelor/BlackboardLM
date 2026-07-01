@@ -1,6 +1,5 @@
 import reflex as rx
 from BlackboardLM.state import AppState
-import BlackboardLM.theme as _theme
 
 def star_chart() -> rx.Component:
     return rx.fragment(

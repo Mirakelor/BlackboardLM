@@ -13,7 +13,11 @@ _ACCEPT = {
 def _doc_card(filename: str) -> rx.Component:
     return rx.box(
         rx.hstack(
-            rx.icon("file-text", size=16, color=AppState.theme["primary"]),
+            rx.cond(
+                AppState.parsing_files.contains(filename),
+                rx.spinner(size="1", color=AppState.theme["primary"]),
+                rx.icon("file-text", size=16, color=AppState.theme["primary"]),
+            ),
             rx.text(filename, font_size="xs", font_weight="medium", color=AppState.theme["text_primary"], max_width="140px", overflow="hidden", white_space="nowrap", text_overflow="ellipsis"),
             spacing="2",
             align="center",
@@ -147,7 +151,7 @@ def doc_preview(filename: str) -> rx.Component:
                 rx.icon("x", size=14),
                 on_click=AppState.toggle_doc_preview(filename),
                 variant="ghost",
-                color_scheme="gray",
+                color=AppState.theme["text_secondary"],
                 size="1",
             ),
             width="100%",
@@ -171,6 +175,7 @@ def doc_preview(filename: str) -> rx.Component:
             border=AppState.theme["border"],
             max_height="360px",
             overflow="auto",
+            class_name="doc-preview-content",
         ),
         padding="12px 16px",
         margin_x="24px",

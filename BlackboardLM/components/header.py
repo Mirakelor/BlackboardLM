@@ -1,11 +1,11 @@
 import reflex as rx
 from BlackboardLM.state import AppState
-import BlackboardLM.theme as _theme
+import BlackboardLM.config.theme as _theme
 
 def _theme_switch(theme_id: str) -> rx.Component:
-    display = _theme.THEMES[theme_id].display_name
+    _display = _theme.THEMES[theme_id].display_name
     return rx.box(
-        rx.text(display, font_size="xs", white_space="nowrap"),
+        rx.text(_display, font_size="xs", white_space="nowrap"),
         padding="4px 12px",
         border_radius="full",
         cursor="pointer",
@@ -54,7 +54,16 @@ def header() -> rx.Component:
             rx.hstack(
                 _theme_switch(_theme.THEME_HOGWARTS),
                 _theme_switch(_theme.THEME_SAKURA),
+                rx.icon(
+                    "settings",
+                    size=20,
+                    color=AppState.theme["text_muted"],
+                    cursor="pointer",
+                    on_click=AppState.toggle_settings,
+                    style={"_hover": {"color": AppState.theme["primary"]}},
+                ),
                 spacing="2",
+                align="center",
                 flex_shrink="0",
             ),
             width="100%",
