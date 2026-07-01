@@ -13,6 +13,7 @@ Built with [Reflex](https://reflex.dev), powered by [Docling](https://github.com
 - [Project Structure](#project-structure)
 - [Getting Started](#getting-started)
 - [Usage](#usage)
+  - [Authentication](#authentication)
   - [Uploading Documents](#uploading-documents)
   - [Asking Questions](#asking-questions)
   - [Knowledge Graph](#knowledge-graph)
@@ -76,9 +77,17 @@ Choose how BlackboardLM searches your documents:
 
 Each theme comes with its own color palette, typography, microcopy, and background animations — every text label and placeholder adapts to the theme.
 
+### 🔐 Authentication
+
+Set `ACCESS_PASSWORD` in your `.env` or deployment environment to enable password protection. When configured, a login card appears before the main interface. Enter the password to unlock the app — a persistent cookie keeps you logged in across page refreshes, so you only need to enter it once per browser session.
+
+When no password is set, the app opens directly without authentication — ideal for local development. A **Logout** button in the Settings panel lets you sign out and return to the login screen.
+
 ### ⚙️ Settings Panel
 
 A slide-out drawer for live configuration. Change your API key, model, thinking mode, reasoning effort, output length, retrieval strategy, and response style without restarting the app. Settings persist to `.env` and take effect on the next request.
+
+A **Clear All Data** button resets everything — knowledge graph, indexed documents, chat history, and cached previews — returning the app to a fresh state. When authentication is enabled, a **Logout** button is also available.
 
 ### 🐱 Loading Screen
 
@@ -122,6 +131,7 @@ BlackboardLM/
 │   │   ├── styles.py               # Global CSS & JS
 │   │   ├── header.py               # Nav bar & theme switcher
 │   │   ├── settings_panel.py       # Settings drawer
+│   │   ├── auth.py                 # Login card
 │   │   ├── documents.py            # Upload zone & doc preview
 │   │   ├── star_chart.py           # Knowledge graph component
 │   │   ├── chat.py                 # Chat message bubbles
@@ -229,6 +239,7 @@ Click the gear icon in the header to open the settings drawer. Configure your AP
 
 | Variable | Default | Description |
 |---|---|---|
+| `ACCESS_PASSWORD` | `""` | Login password (empty = no auth) |
 | `DEEPSEEK_API_KEY` | — | Your DeepSeek API key |
 | `DEEPSEEK_BASE_URL` | `https://api.deepseek.com` | API endpoint |
 | `LLM_MODEL` | `deepseek-chat` | Model name |
