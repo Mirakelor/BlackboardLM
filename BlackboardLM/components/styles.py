@@ -484,9 +484,15 @@ def global_styles() -> rx.Component:
             }
             _loader.addEventListener('click', _hide);
             setTimeout(_hide, 15000);
+            var _retries = 0;
             function _watchGraph() {
                 var _dataEl = document.getElementById('graph-data');
-                if (!_dataEl) { setTimeout(_watchGraph, 200); return; }
+                if (!_dataEl) {
+                    _retries++;
+                    if (_retries > 10) { _hide(); return; }
+                    setTimeout(_watchGraph, 200);
+                    return;
+                }
                 if ((_dataEl.textContent || '').length > 4) { _hide(); return; }
                 new MutationObserver(function() {
                     var _t = _dataEl.textContent || '';

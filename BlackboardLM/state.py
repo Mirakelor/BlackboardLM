@@ -1,11 +1,12 @@
 import asyncio
 import hashlib
 import json
+import shutil
 import tempfile
 from dataclasses import asdict
 from pathlib import Path
 import reflex as rx
-from BlackboardLM.pipeline.parsers.docling_parser import DoclingParser
+from BlackboardLM.pipeline.parsers.docling_parser import DoclingParser, _IMAGES_DIR
 from BlackboardLM.rag.engine import RAGEngine
 import BlackboardLM.config.settings as _s
 from BlackboardLM.config.settings import _write_env
@@ -42,6 +43,10 @@ class AppState(rx.State):
     selected_preset: str = ""
     presets_expanded: bool = False
     settings_saved: bool = False
+    auth_token: str = rx.Cookie(name="bl_auth")
+    is_authenticated: bool = not _s.ACCESS_PASSWORD
+    login_password: str = ""
+    login_error: str = ""
 
     @rx.var
     def graph_data_json(self) -> str:
@@ -57,6 +62,13 @@ class AppState(rx.State):
         return asdict(_t)
 
     async def on_load(self):
+        if _s.ACCESS_PASSWORD:
+            if not self._verify_token(self.auth_token):
+                async with self:
+                    self.is_authenticated = False
+                return
+            async with self:
+                self.is_authenticated = True
         await _rag.startup()
         await asyncio.sleep(1)
         data = await _rag.get_graph_data()
@@ -216,3 +228,53 @@ class AppState(rx.State):
         for _key, _val in _restart_keys:
             _write_env(_key, _val)
         self.settings_saved = True
+
+    def set_login_password(self, _value: str):
+        self.login_password = _value
+        self.login_error = ""
+
+    def handle_login_key(self, _key: str):
+        if _key == "Enter":
+            return AppState.login
+
+    def login(self):
+        if self.login_password != _s.ACCESS_PASSWORD:
+            self.login_error = "Incorrect password"
+            self.login_password = ""
+            return
+        _token = hashlib.sha256(f"{self.login_password}:bl_salt".encode()).hexdigest()
+        self.auth_token = _token
+        self.is_authenticated = True
+        self.login_error = ""
+        self.login_password = ""
+        yield
+        yield AppState.on_load
+
+    def logout(self):
+        self.auth_token = ""
+        self.is_authenticated = False
+
+    def _verify_token(self, _token: str) -> bool:
+        if not _token or not _s.ACCESS_PASSWORD:
+            return False
+        _expected = hashlib.sha256(f"{_s.ACCESS_PASSWORD}:bl_salt".encode()).hexdigest()
+        return _token == _expected
+
+    @rx.event(background=True)
+    async def clear_all_data(self):
+        _loop = asyncio.get_running_loop()
+        await _rag.reset()
+        if await _loop.run_in_executor(None, _PREVIEW_DIR.exists):
+            _f_list = await _loop.run_in_executor(None, lambda d=_PREVIEW_DIR: list(d.iterdir()))
+            for _f in _f_list:
+                await _loop.run_in_executor(None, _f.unlink, True)
+        if await _loop.run_in_executor(None, _IMAGES_DIR.exists):
+            await _loop.run_in_executor(None, shutil.rmtree, str(_IMAGES_DIR))
+            await _loop.run_in_executor(None, lambda d=_IMAGES_DIR: d.mkdir(parents=True, exist_ok=True))
+        async with self:
+            self.uploaded_files = []
+            self.chat_messages = []
+            self.expanded_doc = ""
+            self.preview_content = ""
+            self.preview_ready = False
+            self.graph_data = {"nodes": [], "edges": []}

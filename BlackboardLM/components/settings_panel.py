@@ -1,5 +1,6 @@
 import reflex as rx
 from BlackboardLM.state import AppState
+import BlackboardLM.config.settings as _s
 
 _MODE_OPTIONS = ["naive", "local", "global", "hybrid", "mix"]
 _RESPONSE_OPTIONS = ["Multiple Paragraphs", "Bullet Points", "Single Paragraph"]
@@ -164,6 +165,40 @@ def settings_panel() -> rx.Component:
                 rx.cond(
                     AppState.settings_saved,
                     rx.text("Saved. All settings applied.", font_size="xs", color=AppState.theme["accent"]),
+                ),
+                rx.separator(size="4", style={"color": AppState.theme["text_muted"], "opacity": 0.2}),
+                _section("Data", "database"),
+                rx.button(
+                    rx.hstack(
+                        rx.icon("trash-2", size=16),
+                        rx.text("Clear All Data", font_size="sm"),
+                        spacing="2",
+                    ),
+                    on_click=AppState.clear_all_data,
+                    background="transparent",
+                    color=AppState.theme["accent"],
+                    border=f"1px solid {AppState.theme['accent']}",
+                    border_radius=AppState.theme["radius"],
+                    width="100%",
+                    cursor="pointer",
+                    style={"_hover": {"background": f"{AppState.theme['accent']}15"}},
+                ),
+                rx.cond(
+                    _s.ACCESS_PASSWORD != "",
+                    rx.button(
+                        rx.hstack(
+                            rx.icon("log-out", size=16),
+                            rx.text("Logout", font_size="sm"),
+                            spacing="2",
+                        ),
+                        on_click=AppState.logout,
+                        background="transparent",
+                        color=AppState.theme["text_muted"],
+                        border=f"1px solid {AppState.theme['text_muted']}",
+                        border_radius=AppState.theme["radius"],
+                        width="100%",
+                        cursor="pointer",
+                    ),
                 ),
                 spacing="4",
                 padding="20px",

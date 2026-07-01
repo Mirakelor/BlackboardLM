@@ -1,6 +1,7 @@
 import asyncio
 import concurrent.futures
 import queue
+import shutil
 import tempfile
 import threading
 from pathlib import Path
@@ -208,3 +209,13 @@ class RAGEngine:
                     "keywords": (_e.get("keywords", "") or "")[:60],
                 })
         return {"nodes": _node_list, "edges": _edge_list}
+
+    async def reset(self):
+        await self._ensure_storages()
+        _loop = asyncio.get_running_loop()
+        if self._working_dir.exists():
+            await _loop.run_in_executor(None, shutil.rmtree, str(self._working_dir))
+        self._working_dir.mkdir(parents=True, exist_ok=True)
+        self._storages_ready = False
+        self.rag = None
+        await self._ensure_storages()

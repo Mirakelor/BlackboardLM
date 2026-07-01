@@ -114,7 +114,7 @@ def doc_shelf() -> rx.Component:
                         rx.icon("upload", size=14, color=AppState.theme["text_muted"]),
                         rx.text(
                             f"{AppState.theme["upload_text"]} · {AppState.theme["upload_hint"]}",
-                            font_size="xs",
+                            font_size="13px",
                             color=AppState.theme["text_muted"],
                         ),
                         spacing="2",
