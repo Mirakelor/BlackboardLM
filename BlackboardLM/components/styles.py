@@ -265,8 +265,8 @@ def global_styles() -> rx.Component:
             
             .rx-Upload {{ padding: 0px !important; border: none !important; }}
             .rx-Upload > div {{ padding: 0px 16px !important; }}
-            .rt-SelectTrigger {{ padding-left: 12px !important; padding-right: 28px !important; }}
-            .rt-SelectItem {{ padding-left: 24px !important; }}
+            .rt-SelectTrigger {{ padding-left: 12px !important; padding-right: 28px !important; text-transform: capitalize; }}
+            .rt-SelectItem {{ padding-left: 24px !important; text-transform: capitalize; }}
             ::-webkit-scrollbar {{ width: 6px; height: 3px; }}
             ::-webkit-scrollbar-track {{ background: transparent; }}
             ::-webkit-scrollbar-thumb {{

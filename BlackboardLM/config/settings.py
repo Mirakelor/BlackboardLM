@@ -31,8 +31,8 @@ def _write_env(_key: str, _value: str):
     _env_file.write_text("\n".join(_lines) + "\n", "utf-8")
     os.environ[_key] = _value
 
-OPENAI_API_KEY = os.environ.get("OPENAI_API_KEY")
-OPENAI_BASE_URL = os.environ.get("OPENAI_BASE_URL", "https://api.deepseek.com")
+DEEPSEEK_API_KEY = os.environ.get("DEEPSEEK_API_KEY")
+DEEPSEEK_BASE_URL = os.environ.get("DEEPSEEK_BASE_URL", "https://api.deepseek.com")
 LLM_MODEL = os.environ.get("LLM_MODEL", "deepseek-v4-flash")
 LLM_THINKING = os.environ.get("LLM_THINKING", "disabled")
 LLM_REASONING_EFFORT = os.environ.get("LLM_REASONING_EFFORT", "max")

@@ -31,9 +31,9 @@ class AppState(rx.State):
     preview_content: str = ""
     preview_ready: bool = False
     settings_visible: bool = False
-    settings_api_key: str = _s.OPENAI_API_KEY or ""
+    settings_api_key: str = _s.DEEPSEEK_API_KEY or ""
     settings_model: str = _s.LLM_MODEL
-    settings_base_url: str = _s.OPENAI_BASE_URL
+    settings_base_url: str = _s.DEEPSEEK_BASE_URL
     settings_thinking: str = _s.LLM_THINKING
     settings_reasoning: str = _s.LLM_REASONING_EFFORT
     settings_max_tokens: int = _s.LLM_MAX_TOKENS
@@ -205,9 +205,9 @@ class AppState(rx.State):
 
     def save_settings(self):
         _restart_keys = [
-            ("OPENAI_API_KEY", self.settings_api_key),
+            ("DEEPSEEK_API_KEY", self.settings_api_key),
             ("LLM_MODEL", self.settings_model),
-            ("OPENAI_BASE_URL", self.settings_base_url),
+            ("DEEPSEEK_BASE_URL", self.settings_base_url),
             ("LLM_THINKING", self.settings_thinking),
             ("LLM_REASONING_EFFORT", self.settings_reasoning),
             ("LLM_MAX_TOKENS", str(self.settings_max_tokens)),

@@ -9,8 +9,8 @@ _client_cfg = None
 def _get_client():
     global _client, _client_cfg
     _cfg = (
-        os.environ.get("OPENAI_API_KEY", ""),
-        os.environ.get("OPENAI_BASE_URL", "https://api.deepseek.com"),
+        os.environ.get("DEEPSEEK_API_KEY", ""),
+        os.environ.get("DEEPSEEK_BASE_URL", "https://api.deepseek.com"),
     )
     if _client_cfg != _cfg:
         with _lock:
