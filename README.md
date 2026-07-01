@@ -6,7 +6,7 @@ Built with [Reflex](https://reflex.dev), powered by [Docling](https://github.com
 
 ---
 
-## Table of Contents
+### 🗺️ Table of Contents
 
 - [Features](#features)
 - [Tech Stack](#tech-stack)
@@ -28,19 +28,19 @@ Built with [Reflex](https://reflex.dev), powered by [Docling](https://github.com
 
 ## Features
 
-### Grounded Answers with Source Citations
+### 📎 Grounded Answers with Source Citations
 
 Every answer is anchored in your documents. BlackboardLM reads your uploaded files, builds a knowledge graph, and retrieves the most relevant information for each question. Responses come with inline citations (`[1]`, `[2]`) linking back to your sources, plus a References section and suggested follow-up questions to deepen your exploration.
 
-### Document Upload & Parsing
+### 📄 Document Upload & Parsing
 
 Drag and drop PDF, DOCX, PPTX, XLSX, TXT, Markdown, HTML, EPUB, JPG, PNG, or TIFF. Files are automatically parsed, indexed, and turned into a searchable knowledge base. Click any uploaded file to preview its full content rendered as Markdown.
 
-### Knowledge Graph
+### 🕸️ Knowledge Graph
 
 Every document set generates an interactive knowledge graph showing key entities and their relationships. The graph visualizes the conceptual structure of your materials — click the toggle to expand or collapse it. Nodes are sized by importance and color-coded by entity type.
 
-### 8 Preset Conversation Modes
+### 🎛️ 8 Preset Conversation Modes
 
 Quickly shift the AI's approach with one-click presets above the input bar:
 
@@ -55,7 +55,7 @@ Quickly shift the AI's approach with one-click presets above the input bar:
 | **Critique** | Critical analysis of arguments, gaps, and weak points |
 | **Deep Dive** | Exhaustive layered analysis of your question |
 
-### 5 Retrieval Strategies
+### 🔍 5 Retrieval Strategies
 
 Choose how BlackboardLM searches your documents:
 
@@ -67,7 +67,7 @@ Choose how BlackboardLM searches your documents:
 | **Hybrid** | Combined local + global |
 | **Mix** | All three — naive, local, and global |
 
-### Dual Themes
+### 🎨 Dual Themes
 
 | Theme | Style |
 |---|---|
@@ -76,21 +76,21 @@ Choose how BlackboardLM searches your documents:
 
 Each theme comes with its own color palette, typography, microcopy, and background animations — every text label and placeholder adapts to the theme.
 
-### Settings Panel
+### ⚙️ Settings Panel
 
 A slide-out drawer for live configuration. Change your API key, model, thinking mode, reasoning effort, output length, retrieval strategy, and response style without restarting the app. Settings persist to `.env` and take effect on the next request.
 
-### Loading Screen
+### 🐱 Loading Screen
 
 A CSS-only spinning cat (from hexo-theme-shoka) appears while the knowledge graph initializes. Click to dismiss, or it fades out automatically once your documents are ready.
 
-### Responsive Layout
+### 📱 Responsive Layout
 
 Adapts gracefully from desktop to mobile, with a scrollable document shelf, collapsible graph, and fixed bottom input bar.
 
 ---
 
-## Tech Stack
+## 🧰 Tech Stack
 
 | Layer | Technology |
 |---|---|
@@ -103,7 +103,7 @@ Adapts gracefully from desktop to mobile, with a scrollable document shelf, coll
 
 ---
 
-## Project Structure
+## 📁 Project Structure
 
 ```
 BlackboardLM/
@@ -139,7 +139,7 @@ BlackboardLM/
 
 ---
 
-## Getting Started
+## 🚀 Getting Started
 
 ### 1. Install dependencies
 
@@ -177,7 +177,7 @@ Open `http://localhost:3000`.
 
 ## Usage
 
-### Uploading Documents
+### 📤 Uploading Documents
 
 Drag files directly onto the upload zone at the top of the page, or click it to open your system file picker. You can upload multiple files in one go — they appear as cards in a horizontally scrollable shelf. While a file is being parsed, its card shows a spinner. Once ready, click any card to expand a document preview panel with the full Markdown-rendered content, including extracted tables.
 
@@ -185,7 +185,7 @@ Supported formats: PDF, DOCX, PPTX, XLSX, TXT, Markdown, HTML, EPUB, JPG, PNG, T
 
 Behind the scenes, each uploaded file is parsed, its entities and relationships are extracted into a knowledge graph, and the full text is chunked and indexed for retrieval — all automatically.
 
-### Asking Questions
+### 💬 Asking Questions
 
 Type your question and press **Enter** (use **Shift+Enter** for newlines). BlackboardLM retrieves relevant passages from your documents and generates an answer grounded in your sources. Each response includes:
 
@@ -195,35 +195,35 @@ Type your question and press **Enter** (use **Shift+Enter** for newlines). Black
 
 The conversation carries context across turns, so you can drill deeper naturally.
 
-### Knowledge Graph
+### 🕸️ Knowledge Graph
 
 After documents are processed, an interactive knowledge graph appears below the upload shelf. It visualizes the concepts and entities extracted from your files, connected by the relationships discovered between them. Use the chevron button on the title bar to collapse or expand the graph. The graph is rendered with Cytoscape.js — you can pan and zoom to explore dense clusters. Nodes are sized by their connection count (degree) and color-coded by entity type. Hover over a node to see its full description; edges show the keyword linking two entities.
 
 When no documents are loaded, the graph area shows a placeholder message. While documents are parsing, it displays a processing indicator. Both adapt to the active theme.
 
-### Preset Modes
+### 🎛️ Preset Modes
 
 Eight preset chips are positioned above the input bar, collapsed by default. Click **"Presets ▸"** to reveal them, then click any chip to activate that mode. The selected chip highlights in the theme's primary color. Click it again to deselect and return to the default conversation style. Only one preset can be active at a time.
 
 Each preset injects a specific instruction into the system prompt, shaping how the AI structures its response. For example, **Study Guide** adds "create a study guide with key concepts, definitions, and review questions"; **Timeline** asks for chronological event extraction. The presets are defined in `config/prompts.py` under `PRESET_MODES`.
 
-### Query Strategies
+### 🔍 Query Strategies
 
 Control how BlackboardLM retrieves information from your documents via the **Query Mode** dropdown in Settings. The default is **Naive** (direct full-text retrieval, bypassing the knowledge graph). Switch to **Local**, **Global**, **Hybrid**, or **Mix** when you want graph-aware answers that leverage entity relationships and community summaries. The choice persists in `.env` under `QUERY_MODE`.
 
-### Themes
+### 🎨 Themes
 
 Two theme chips sit in the top navigation bar: **🏰 Flourish & Blotts** (dark magical-academia) and **🌸 Shiori** (light Japanese). Click either to switch instantly — colors, fonts, background particles, button styles, and all microcopy change together. The active theme is saved to `.env` (`THEME=sakura` or `THEME=hogwarts`) and restored on next launch.
 
 All theme data lives in `config/theme.py` as two `Theme` dataclass instances. Adding a new theme means creating a third instance and registering it in `header.py`.
 
-### Settings Panel
+### ⚙️ Settings Panel
 
 Click the gear icon in the header to open the settings drawer. Configure your API key, model, thinking mode, reasoning depth, output token limit, retrieval strategy, and response style. Changes are saved to `.env` and applied on the next request — no restart needed.
 
 ---
 
-## Configuration
+## 🔧 Configuration
 
 ### Environment Variables
 
@@ -246,7 +246,7 @@ On startup, BlackboardLM checks connectivity to `huggingface.co`. If unreachable
 
 ---
 
-## Prompt System
+## 🧠 Prompt System
 
 The system prompt is assembled from modular blocks in `config/prompts.py`:
 
@@ -266,6 +266,6 @@ The `naive` mode receives raw document chunks as `{content_data}`; all other mod
 
 ---
 
-## License
+## 📄 License
 
 MIT
