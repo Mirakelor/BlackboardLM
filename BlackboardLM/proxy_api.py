@@ -1,17 +1,21 @@
 import os
 
 import httpx
+from fastapi import FastAPI
+from fastapi.responses import PlainTextResponse
 from starlette.requests import Request
-from starlette.responses import PlainTextResponse
 
 _FALLBACKS = [
     os.environ.get("HF_ENDPOINT", "https://huggingface.co"),
     "https://hf-mirror.com",
 ]
 
+hf_proxy_app = FastAPI()
 
-async def _hf_proxy(_request: Request):
-    _path = _request.path_params.get("_path", "")
+
+@hf_proxy_app.get("/api/hf-proxy/{_path:path}")
+@hf_proxy_app.head("/api/hf-proxy/{_path:path}")
+async def _hf_proxy(_request: Request, _path: str = ""):
     _headers = {}
     if "range" in _request.headers:
         _headers["range"] = _request.headers["range"]
@@ -20,7 +24,7 @@ async def _hf_proxy(_request: Request):
     for _endpoint in _FALLBACKS:
         try:
             _url = f"{_endpoint}/{_path}"
-            async with httpx.AsyncClient(timeout=15.0, follow_redirects=True) as client:
+            async with httpx.AsyncClient(timeout=15.0, follow_redirects=True, trust_env=False) as client:
                 _resp = await client.send(
                     client.build_request(_method, _url, headers=_headers)
                 )
@@ -34,12 +38,10 @@ async def _hf_proxy(_request: Request):
                 if _cl:
                     _resp_headers["content-length"] = _cl
                 return PlainTextResponse(
-                    _resp.content,
+                    _resp.content.decode("utf-8", errors="replace"),
                     status_code=_resp.status_code,
                     headers=_resp_headers,
                 )
         except Exception:
             continue
     return PlainTextResponse("all endpoints failed", status_code=502)
-
-
