@@ -23,7 +23,7 @@ let _llmConfig = {
   thinking: 'disabled',
   reasoningEffort: 'max',
   maxTokens: 16384,
-  hfEndpoint: 'https://huggingface.co',
+  proxyUrl: '/api/hf-proxy',
 };
 
 const ENTITY_EXTRACTION_PROMPT = `---Role---
@@ -464,10 +464,7 @@ async function _init(opts = {}) {
   if (opts.thinking) _llmConfig.thinking = opts.thinking;
   if (opts.reasoningEffort) _llmConfig.reasoningEffort = opts.reasoningEffort;
   if (opts.maxTokens) _llmConfig.maxTokens = opts.maxTokens;
-  if (opts.hfEndpoint) _llmConfig.hfEndpoint = opts.hfEndpoint;
-
-  env.remoteHost = _llmConfig.hfEndpoint;
-  console.log('[rag.worker] HF endpoint:', _llmConfig.hfEndpoint);
+  if (opts.proxyUrl) { _llmConfig.proxyUrl = opts.proxyUrl; env.remoteHost = opts.proxyUrl; }
 
   if (_pipe) {
     console.log('[rag.worker] _init: already initialized');
@@ -581,7 +578,7 @@ self.onmessage = async (_e) => {
         if (data.thinking !== undefined) _llmConfig.thinking = data.thinking;
         if (data.reasoningEffort !== undefined) _llmConfig.reasoningEffort = data.reasoningEffort;
         if (data.maxTokens !== undefined) _llmConfig.maxTokens = data.maxTokens;
-        if (data.hfEndpoint !== undefined) { _llmConfig.hfEndpoint = data.hfEndpoint; env.remoteHost = data.hfEndpoint; }
+        if (data.proxyUrl !== undefined) { _llmConfig.proxyUrl = data.proxyUrl; env.remoteHost = data.proxyUrl; }
         self.postMessage({ type: 'config_set' });
         break;
       default:

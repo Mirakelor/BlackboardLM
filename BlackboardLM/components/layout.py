@@ -1,4 +1,5 @@
 import reflex as rx
+
 from BlackboardLM.components.styles import global_styles
 from BlackboardLM.components.decorations import hogwarts_stars, sakura_petals
 from BlackboardLM.components.header import header

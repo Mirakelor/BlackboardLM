@@ -1,4 +1,5 @@
 import reflex as rx
+
 from BlackboardLM.state import AppState
 
 def star_chart() -> rx.Component:

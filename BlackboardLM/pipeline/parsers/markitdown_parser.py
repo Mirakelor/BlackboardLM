@@ -1,4 +1,5 @@
 from pathlib import Path
+
 from .base import BaseParser
 
 class MarkitdownParser(BaseParser):

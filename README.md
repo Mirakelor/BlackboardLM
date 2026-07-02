@@ -104,11 +104,11 @@ Adapts gracefully from desktop to mobile, with a scrollable document shelf, coll
 | Layer | Technology |
 |---|---|
 | Framework | [Reflex](https://reflex.dev) (Tailwind v4, Radix Themes) |
-| Document Parsing | [MarkitDown](https://github.com/microsoft/markitdown) — 15 formats (PDF, DOCX, PPTX, XLSX, EPUB, HTML, MD, TXT, JPG, PNG, TIFF, CSV, JSON, XML) |
+| Document Parsing | [MarkitDown](https://github.com/microsoft/markitdown) — 15 formats (PDF, DOCX, PPTX, XLSX, EPUB, HTML, MD, TXT, JPG, JPEG, PNG, TIFF, CSV, JSON, XML) |
 | Knowledge Graph RAG | [lightrag](https://github.com/Mirakelor/BlackboardLM) — browser-side Web Worker, in-memory graph + vector DB, IndexedDB persistence |
 | LLM | DeepSeek-compatible API, called directly from browser via `fetch` |
-| Embedding | `Xenova/multilingual-e5-small` via Transformers.js (WASM), 384-dim. Model files downloaded from HuggingFace, with automatic `hf-mirror.com` fallback |
-| Graph Visualization | Cytoscape.js, loaded from UNPKG CDN |
+| Embedding | `Xenova/multilingual-e5-small` via Transformers.js (WASM), 384-dim. Model files served through a local proxy (`/api/hf-proxy`) to avoid CORS issues, with automatic `hf-mirror.com` fallback on the backend |
+| Graph Visualization | Cytoscape.js, loaded from unpkg CDN |
 | Vector DB | In-memory cosine similarity (lightrag built-in) |
 
 ---
@@ -142,8 +142,9 @@ BlackboardLM/
 │   │   ├── chat.py                 # Chat message bubbles
 │   │   ├── input_bar.py            # Input field & preset chips
 │   │   └── decorations.py          # Background particles
+│   ├── proxy_api.py                # HF model proxy (CORS-free)
 │   ├── rag/
-│   │   └── engine.py               # LLM & HF endpoint config provider
+│   │   └── engine.py               # LLM config provider
 │   └── pipeline/
 │       └── parsers/
 │           ├── base.py             # Abstract parser interface
@@ -192,7 +193,7 @@ reflex run
 
 Open `http://localhost:3000`.
 
-On first launch, Transformers.js downloads the embedding model from HuggingFace (~470 MB). If `huggingface.co` is unreachable, the app automatically falls back to `hf-mirror.com`. The model is cached by your browser for instant reuse on subsequent loads. A progress indicator shows download and indexing status.
+On first launch, the embedding model (~470 MB) is downloaded through a local proxy (`/api/hf-proxy`) which routes requests to HuggingFace (or `hf-mirror.com` if `huggingface.co` is unreachable). The model is cached by your browser for instant reuse on subsequent loads. A progress indicator shows download and indexing status.
 
 ---
 
@@ -260,12 +261,13 @@ Click the gear icon in the header to open the settings drawer. Configure your AP
 | `QUERY_MODE` | `naive` | Default retrieval strategy |
 | `RESPONSE_TYPE` | `Multiple Paragraphs` | Response formatting style |
 | `THEME` | `sakura` | Default theme (`sakura` / `hogwarts`) |
+| `HF_ENDPOINT` | *(auto-detected)* | HuggingFace mirror endpoint (default: `https://huggingface.co`, fallback `https://hf-mirror.com`) |
 
 All values can be changed at runtime via the Settings panel.
 
 ### HuggingFace Mirror
 
-On startup, BlackboardLM checks connectivity to `huggingface.co`. If unreachable (e.g., from mainland China), it sets `HF_ENDPOINT=https://hf-mirror.com`. This endpoint is passed to the browser-side Transformers.js Worker so the embedding model can be downloaded via the mirror.
+On startup, the Python backend checks connectivity to `huggingface.co`. If unreachable, it sets `HF_ENDPOINT=https://hf-mirror.com` and all subsequent model proxy requests are routed to the mirror. The embedding model is served to the browser through a local proxy (`/api/hf-proxy`) that routes requests to the configured endpoint. Reflex automatically proxies `/api/*` requests from the frontend to the backend, so the browser always requests from the same origin.
 
 ---
 

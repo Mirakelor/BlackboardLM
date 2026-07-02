@@ -1,3 +1,6 @@
 reflex==0.9.6.post1
 python-dotenv==1.2.2
+azure-ai-contentunderstanding>=1.2.0b1
 markitdown[all]==0.1.6
+fastapi
+httpx
