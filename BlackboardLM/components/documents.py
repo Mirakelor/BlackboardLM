@@ -76,7 +76,7 @@ def doc_shelf() -> rx.Component:
                                 style={"_hover": {"border_color": AppState.theme["primary"], "color": AppState.theme["primary"]}},
                             ),
                             multiple=True,
-                            on_drop=AppState.upload_file,
+                            on_drop=AppState.handle_upload,
                             accept=_ACCEPT,
                             style={"padding": "0"},
                         ),
@@ -124,7 +124,7 @@ def doc_shelf() -> rx.Component:
                     style={"_hover": {"color": AppState.theme["primary"]}},
                 ),
                 multiple=True,
-                on_drop=AppState.upload_file,
+                on_drop=AppState.handle_upload,
                 accept=_ACCEPT,
             ),
             style={

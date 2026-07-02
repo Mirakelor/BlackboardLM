@@ -60,8 +60,6 @@ _DONT = """7. Important Constraints
    - Never end abruptly. Close with a brief summary and suggested follow-ups.
 """
 
-_USER_PROMPT_SECTION = """8. Additional Instructions: {user_prompt}"""
-
 _COMMON_PROMPT = (
     _HEADER
     + "\n---Instructions---\n\n"
@@ -78,12 +76,10 @@ _COMMON_PROMPT = (
     + _FORMAT
     + "\n"
     + _DONT
-    + "\n"
-    + _USER_PROMPT_SECTION
 )
 
-BLACKBOARDLM_RAG_SYSTEM_PROMPT = _COMMON_PROMPT + "\n\n---Context---\n{context_data}"
-BLACKBOARDLM_NAIVE_SYSTEM_PROMPT = _COMMON_PROMPT + "\n\n---Context---\n{content_data}"
+BLACKBOARDLM_RAG_SYSTEM_PROMPT = _COMMON_PROMPT
+BLACKBOARDLM_NAIVE_SYSTEM_PROMPT = _COMMON_PROMPT
 
 PRESET_MODES: dict[str, str] = {
     "summarize": (

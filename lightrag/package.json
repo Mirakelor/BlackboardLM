@@ -1,0 +1,31 @@
+{
+  "name": "lightrag",
+  "version": "1.0.0",
+  "description": "Lightweight RAG library with knowledge graph — browser and Node.js, MIT licensed",
+  "main": "src/index.js",
+  "files": [
+    "src/"
+  ],
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [
+    "rag",
+    "knowledge-graph",
+    "vector-db",
+    "llm",
+    "transformers.js",
+    "lightrag",
+    "entity-extraction"
+  ],
+  "author": "BlackboardLM",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/winterist/BlackboardLM"
+  },
+  "type": "commonjs",
+  "dependencies": {
+    "@huggingface/transformers": "^4.2.0"
+  }
+}

@@ -55,3 +55,4 @@ def sakura_petals() -> rx.Component:
         *_petals,
         class_name="sakura-petals",
     )
+

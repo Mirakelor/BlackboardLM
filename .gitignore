@@ -38,6 +38,14 @@ build/
 
 # Database / Storage
 *.db
+
+# Node.js
+node_modules/
+package-lock.json
+
+# LightRAG JS
+lightrag/node_modules/
+lightrag/package-lock.json
 *.duckdb
 
 # Test

@@ -293,6 +293,8 @@ def global_styles() -> rx.Component:
             ::placeholder {{ color: {AppState.theme["text_secondary"]}; opacity: 0.8; }}
             ::selection {{ background: {AppState.theme["primary"]}; color: {AppState.theme["background"]}; }}
             textarea::selection {{ background: {AppState.theme["primary"]}; color: {AppState.theme["background"]}; }}
+            
+
         </style>
         """),
         rx.script("""

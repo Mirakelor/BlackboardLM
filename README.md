@@ -2,7 +2,7 @@
 
 **Your documents, grounded answers.** Upload your materials, ask questions, and get AI-powered insights backed by your sources — like having a research partner who has read everything you've shared.
 
-Built with [Reflex](https://reflex.dev), powered by [Docling](https://github.com/DS4SD/docling) for document parsing and [LightRAG](https://github.com/HKUDS/LightRAG) for knowledge-graph retrieval. Runs with any DeepSeek-compatible API.
+Built with [Reflex](https://reflex.dev), powered by [MarkitDown](https://github.com/microsoft/markitdown) for document parsing and [lightrag](https://github.com/winterist/BlackboardLM) for knowledge-graph retrieval. Runs with any DeepSeek-compatible API.
 
 ---
 
@@ -35,7 +35,7 @@ Every answer is anchored in your documents. BlackboardLM reads your uploaded fil
 
 ### 📄 Document Upload & Parsing
 
-Drag and drop PDF, DOCX, PPTX, XLSX, TXT, Markdown, HTML, EPUB, JPG, PNG, or TIFF. Files are automatically parsed, indexed, and turned into a searchable knowledge base. Click any uploaded file to preview its full content rendered as Markdown.
+Drag and drop PDF, DOCX, PPTX, XLSX, TXT, Markdown, HTML, EPUB, JPG, PNG, TIFF, CSV, JSON, or XML. Files are automatically parsed, indexed, and turned into a searchable knowledge base. Click any uploaded file to preview its full content rendered as Markdown.
 
 ### 🕸️ Knowledge Graph
 
@@ -62,9 +62,9 @@ Choose how BlackboardLM searches your documents:
 
 | Mode | Behavior |
 |---|---|
-| **Naive** | Direct full-text answer, no graph retrieval |
-| **Local** | Entity-centric: neighbors and related nodes |
-| **Global** | Community-level: summary-based retrieval |
+| **Naive** | Direct LLM answer, no retrieval — chat mode |
+| **Local** | Vector search over document chunks |
+| **Global** | Knowledge graph entity summaries |
 | **Hybrid** | Combined local + global |
 | **Mix** | All three — naive, local, and global |
 
@@ -104,11 +104,12 @@ Adapts gracefully from desktop to mobile, with a scrollable document shelf, coll
 | Layer | Technology |
 |---|---|
 | Framework | [Reflex](https://reflex.dev) (Tailwind v4, Radix Themes) |
-| Document Parsing | [Docling](https://github.com/DS4SD/docling) — PDF, DOCX, PPTX, XLSX, EPUB, HTML, MD, TXT, JPG, PNG, TIFF |
-| Knowledge Graph RAG | [LightRAG](https://github.com/HKUDS/LightRAG) + NetworkX + NanoVectorDB |
-| LLM | DeepSeek-compatible API (OpenAI SDK) |
-| Embedding | `intfloat/multilingual-e5-small` — runs locally, 384-dim, asymmetric |
-| Graph Visualization | Cytoscape.js |
+| Document Parsing | [MarkitDown](https://github.com/microsoft/markitdown) — 15 formats (PDF, DOCX, PPTX, XLSX, EPUB, HTML, MD, TXT, JPG, PNG, TIFF, CSV, JSON, XML) |
+| Knowledge Graph RAG | [lightrag](https://github.com/winterist/BlackboardLM) — self-built npm package, in-memory graph + vector DB |
+| LLM | DeepSeek API via OpenAI Python SDK |
+| Embedding | `Xenova/multilingual-e5-small` via Transformers.js — runs in Node.js subprocess, 384-dim |
+| Graph Visualization | Cytoscape.js, async CDN injection |
+| Vector DB | In-memory cosine similarity (lightrag built-in) |
 
 ---
 
@@ -144,37 +145,48 @@ BlackboardLM/
 │   └── pipeline/
 │       └── parsers/
 │           ├── base.py             # Abstract parser interface
-│           └── docling_parser.py   # Docling document parser
+│           └── markitdown_parser.py # MarkitDown document parser
+├── lightrag/
+│   ├── package.json
+│   ├── server.js
+│   └── src/
+│       ├── chunker.js
+│       ├── embedder.js
+│       ├── graph.js
+│       ├── lightrag.js
+│       ├── prompts.js
+│       ├── vector_db.js
+│       └── index.js
 ```
 
 ---
 
 ## 🚀 Getting Started
 
-### 1. Install dependencies
+### 1. Install Python dependencies
 
 ```bash
-cd BlackboardLM
 pip install -r requirements.txt
 ```
 
-### 2. Configure your API key
+### 2. Install Node.js dependencies
+
+```bash
+cd lightrag && npm install && cd ..
+```
+
+### 3. Configure your API key
 
 Edit `.env`:
 
 ```env
 DEEPSEEK_API_KEY=sk-your-api-key
 DEEPSEEK_BASE_URL=https://api.deepseek.com
-LLM_MODEL=deepseek-chat
-LLM_THINKING=disabled
-LLM_REASONING_EFFORT=medium
-LLM_MAX_TOKENS=16384
-QUERY_MODE=naive
 ```
 
-You can also configure these from the Settings panel after launching.
+All other settings have sensible defaults and can be changed via the Settings panel.
 
-### 3. Run
+### 4. Run
 
 ```bash
 reflex init
@@ -189,15 +201,15 @@ Open `http://localhost:3000`.
 
 ### 📤 Uploading Documents
 
-Drag files directly onto the upload zone at the top of the page, or click it to open your system file picker. You can upload multiple files in one go — they appear as cards in a horizontally scrollable shelf. While a file is being parsed, its card shows a spinner. Once ready, click any card to expand a document preview panel with the full Markdown-rendered content, including extracted tables.
+Drag files directly onto the upload zone at the top of the page, or click it to open your system file picker. You can upload multiple files in one go — they appear as cards in a horizontally scrollable shelf. While a file is being parsed, its card shows a spinner. Once ready, click any card to expand a document preview panel with the full Markdown-rendered content, including tables.
 
-Supported formats: PDF, DOCX, PPTX, XLSX, TXT, Markdown, HTML, EPUB, JPG, PNG, TIFF.
+Supported formats: PDF, DOCX, PPTX, XLSX, TXT, Markdown, HTML, EPUB, JPG, PNG, TIFF, CSV, JSON, XML.
 
 Behind the scenes, each uploaded file is parsed, its entities and relationships are extracted into a knowledge graph, and the full text is chunked and indexed for retrieval — all automatically.
 
 ### 💬 Asking Questions
 
-Type your question and press **Enter** (use **Shift+Enter** for newlines). BlackboardLM retrieves relevant passages from your documents and generates an answer grounded in your sources. Each response includes:
+Type your question and press **Enter** (use **Shift+Enter** for newlines). BlackboardLM generates an answer grounded in your sources (in retrieval modes) or responds directly based on its knowledge (in naive mode). Each response includes:
 
 - **Inline citations** — `[1]`, `[2]` linking to your documents
 - **References** — a list of cited sources at the end
@@ -219,7 +231,7 @@ Each preset injects a specific instruction into the system prompt, shaping how t
 
 ### 🔍 Query Strategies
 
-Control how BlackboardLM retrieves information from your documents via the **Query Mode** dropdown in Settings. The default is **Naive** (direct full-text retrieval, bypassing the knowledge graph). Switch to **Local**, **Global**, **Hybrid**, or **Mix** when you want graph-aware answers that leverage entity relationships and community summaries. The choice persists in `.env` under `QUERY_MODE`.
+Control how BlackboardLM retrieves information from your documents via the **Query Mode** dropdown in Settings. The default is **Naive** (sends your question directly to the LLM with no retrieval — fast, lightweight chat mode). Switch to **Local** for vector search over document chunks, **Global** for knowledge graph entity summaries, **Hybrid** for both, or **Mix** for all three combined. The choice persists in `.env` under `QUERY_MODE`.
 
 ### 🎨 Themes
 
@@ -242,11 +254,12 @@ Click the gear icon in the header to open the settings drawer. Configure your AP
 | `ACCESS_PASSWORD` | `""` | Login password (empty = no auth) |
 | `DEEPSEEK_API_KEY` | — | Your DeepSeek API key |
 | `DEEPSEEK_BASE_URL` | `https://api.deepseek.com` | API endpoint |
-| `LLM_MODEL` | `deepseek-chat` | Model name |
-| `LLM_THINKING` | `disabled` | Deep thinking mode (`enabled` / `disabled`) |
-| `LLM_REASONING_EFFORT` | `medium` | Reasoning depth (`low` / `medium` / `high` / `max`) |
+| `LLM_MODEL` | `deepseek-v4-flash` | Model name |
+| `LLM_THINKING` | `disabled` | Deep thinking mode |
+| `LLM_REASONING_EFFORT` | `max` | Reasoning depth (`low` / `medium` / `high` / `max`) |
 | `LLM_MAX_TOKENS` | `16384` | Max output tokens |
 | `QUERY_MODE` | `naive` | Default retrieval strategy |
+| `RESPONSE_TYPE` | `Multiple Paragraphs` | Response formatting style |
 | `THEME` | `sakura` | Default theme (`sakura` / `hogwarts`) |
 
 All values can be changed at runtime via the Settings panel.
@@ -270,10 +283,11 @@ Citations            → Inline [n] + References section (max 5)
 Dive Deeper          → 3–5 follow-up questions at the end
 Formatting           → Rich Markdown, reply in user's language
 Constraints          → No one-line answers, no fabrication, always close with a summary
-Preset Instruction   → (Optional) The selected preset mode's specific directive
+
+When a preset is selected, its instruction is appended as an additional directive.
 ```
 
-The `naive` mode receives raw document chunks as `{content_data}`; all other modes receive knowledge-graph context as `{context_data}`.
+Context is injected by the lightrag query engine — vector chunks for local/hybrid/mix modes, knowledge graph entities for global/hybrid/mix modes. The `{response_type}` placeholder in the prompt is formatted at query time from the Settings value.
 
 ---
 

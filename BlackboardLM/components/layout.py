@@ -96,5 +96,4 @@ def index() -> rx.Component:
             _main_app(),
             login_card(),
         ),
-        on_mount=AppState.on_load,
     )

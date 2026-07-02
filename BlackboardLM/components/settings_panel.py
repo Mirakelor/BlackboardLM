@@ -184,6 +184,10 @@ def settings_panel() -> rx.Component:
                     style={"_hover": {"background": f"{AppState.theme['accent']}15"}},
                 ),
                 rx.cond(
+                    AppState.clear_done,
+                    rx.text("All data cleared.", font_size="xs", color=AppState.theme["accent"]),
+                ),
+                rx.cond(
                     _s.ACCESS_PASSWORD != "",
                     rx.button(
                         rx.hstack(
