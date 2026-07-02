@@ -1,10 +1,12 @@
 {
   "name": "lightrag",
-  "version": "1.0.0",
-  "description": "Lightweight RAG library with knowledge graph — browser and Node.js, MIT licensed",
+  "version": "1.1.0",
+  "description": "Lightweight RAG library with knowledge graph — runs in Node.js and browsers (Web Worker, no bundler), MIT licensed",
   "main": "src/index.js",
+  "browser": "src/index.js",
   "files": [
-    "src/"
+    "src/",
+    "server.js"
   ],
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
@@ -16,7 +18,12 @@
     "llm",
     "transformers.js",
     "lightrag",
-    "entity-extraction"
+    "entity-extraction",
+    "embeddings",
+    "retrieval",
+    "browser",
+    "web-worker",
+    "indexeddb"
   ],
   "author": "BlackboardLM",
   "license": "MIT",
@@ -25,7 +32,12 @@
     "url": "https://github.com/winterist/BlackboardLM"
   },
   "type": "commonjs",
-  "dependencies": {
-    "@huggingface/transformers": "^4.2.0"
+  "peerDependencies": {
+    "@huggingface/transformers": "^4.0.0"
+  },
+  "peerDependenciesMeta": {
+    "@huggingface/transformers": {
+      "optional": true
+    }
   }
 }

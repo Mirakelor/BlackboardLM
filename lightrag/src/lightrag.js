@@ -89,6 +89,12 @@ class LightRAG {
         return await this._llmFunc(question, { system_prompt: _sysPrompt, history: options.history || [], stream: options.stream });
     }
 
+    async buildContext(question, mode) {
+        if (mode === 'naive' || this._vdb.size === 0) return '';
+        const _qVec = await this._embedder.embedQuery(question);
+        return await this._buildContext(new Float32Array(_qVec), mode);
+    }
+
     async _buildContext(_qVec, mode) {
         let _parts = [];
         if (mode === 'local' || mode === 'hybrid' || mode === 'mix') {

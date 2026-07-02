@@ -6,6 +6,9 @@ def global_styles() -> rx.Component:
         rx.script("""
         (function(){var _s=document.createElement('script');_s.src='https://unpkg.com/cytoscape@3.30.4/dist/cytoscape.min.js';_s.async=true;document.head.appendChild(_s);})();
         """),
+        rx.script("""
+        (function(){var _s=document.createElement('script');_s.src='/rag_bridge.js';document.head.appendChild(_s);})();
+        """),
         rx.html(f"""
         <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
         <link rel="preconnect" href="https://fonts.googleapis.com">

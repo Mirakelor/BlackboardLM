@@ -13,8 +13,8 @@ def _restart_badge() -> rx.Component:
     return rx.text(
         "restart",
         font_size="10px",
-        color=AppState.theme["accent"],
-        background=f"{AppState.theme['accent']}15",
+        color=AppState.theme["text_secondary"],
+        background=f"{AppState.theme['text_muted']}20",
         padding="1px 6px",
         border_radius="3px",
     )
@@ -54,7 +54,7 @@ def _select_input(_label_text: str, _value: str, _options: list[str], _on_change
             _options,
             value=_value,
             on_change=_on_change,
-            variant="soft",
+            variant="surface",
             background=AppState.theme["input_bg"],
             border=AppState.theme["input_border"],
             color=AppState.theme["text_primary"],
@@ -164,7 +164,7 @@ def settings_panel() -> rx.Component:
                 ),
                 rx.cond(
                     AppState.settings_saved,
-                    rx.text("Saved. All settings applied.", font_size="xs", color=AppState.theme["accent"]),
+                    rx.text("Saved. All settings applied.", font_size="xs", color=AppState.theme["primary"]),
                 ),
                 rx.separator(size="4", style={"color": AppState.theme["text_muted"], "opacity": 0.2}),
                 _section("Data", "database"),
@@ -185,7 +185,7 @@ def settings_panel() -> rx.Component:
                 ),
                 rx.cond(
                     AppState.clear_done,
-                    rx.text("All data cleared.", font_size="xs", color=AppState.theme["accent"]),
+                    rx.text("All data cleared.", font_size="xs", color=AppState.theme["text_secondary"]),
                 ),
                 rx.cond(
                     _s.ACCESS_PASSWORD != "",

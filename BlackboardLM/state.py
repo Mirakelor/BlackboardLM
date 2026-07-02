@@ -6,13 +6,12 @@ from dataclasses import asdict
 from pathlib import Path
 import reflex as rx
 from BlackboardLM.pipeline.parsers.markitdown_parser import MarkitdownParser
-from BlackboardLM.rag.engine import RAGEngine
+from BlackboardLM.rag.engine import get_llm_config_json
 import BlackboardLM.config.settings as _s
 from BlackboardLM.config.settings import _write_env
-from BlackboardLM.config.prompts import PRESET_MODES
+from BlackboardLM.config.prompts import PRESET_MODES, BLACKBOARDLM_RAG_SYSTEM_PROMPT, BLACKBOARDLM_NAIVE_SYSTEM_PROMPT
 import BlackboardLM.config.theme as _theme
 
-_rag = RAGEngine()
 _parser = MarkitdownParser()
 _PREVIEW_DIR = Path(tempfile.gettempdir()).joinpath("blackboardlm_previews")
 _PREVIEW_DIR.mkdir(parents=True, exist_ok=True)
@@ -49,6 +48,27 @@ class AppState(rx.State):
     _on_load_done: bool = False
     _pending_files: list = []
     _uploaded_hashes: set = set()
+    rag_doc_counter: int = 0
+    rag_doc_text: str = ""
+    rag_query_counter: int = 0
+    rag_query_params: str = "{}"
+    rag_reset_counter: int = 0
+    rag_config_updated: bool = False
+    rag_status: str = ""
+    rag_model_progress: int = 0
+    rag_insert_ready: int = 0
+    rag_insert_total: int = 0
+    rag_worker_ready: bool = False
+
+    @rx.var
+    def rag_model_progress_pct(self) -> str:
+        return f"{self.rag_model_progress}%"
+
+    @rx.var
+    def rag_insert_progress_pct(self) -> str:
+        if self.rag_insert_total == 0:
+            return "0%"
+        return f"{int(self.rag_insert_ready * 100 / self.rag_insert_total)}%"
 
     @rx.var
     def graph_data_json(self) -> str:
@@ -63,6 +83,12 @@ class AppState(rx.State):
         _t = _theme.THEMES.get(self.theme_name, _theme.THEMES[_theme.THEME_SAKURA])
         return asdict(_t)
 
+    @rx.var
+    def rag_llm_config_json(self) -> str:
+        _cfg = json.loads(get_llm_config_json())
+        _cfg["_configChanged"] = self.rag_config_updated
+        return json.dumps(_cfg, ensure_ascii=False)
+
     @rx.event
     async def on_load(self):
         if self._on_load_done:
@@ -74,13 +100,8 @@ class AppState(rx.State):
                 return
             async with self:
                 self.is_authenticated = True
-        await _rag.startup()
-        await _rag.wait_ready()
-        data = await _rag.get_graph_data()
         async with self:
-            self.graph_data = data
             self._on_load_done = True
-        return AppState.poll_state
 
     @rx.event
     def set_theme(self, name: str):
@@ -134,6 +155,7 @@ class AppState(rx.State):
 
     async def _process_files(self):
         _loop = asyncio.get_running_loop()
+        _full_texts = []
         for _tmp_path, _filename in self._pending_files:
             _name_hash = hashlib.md5(_filename.encode()).hexdigest()[:16]
             _path = _PREVIEW_DIR.joinpath(f"{_name_hash}.txt")
@@ -141,20 +163,14 @@ class AppState(rx.State):
                 _result = await _loop.run_in_executor(None, _parser.parse, _tmp_path)
                 _full_text = _result["text"]
                 await _loop.run_in_executor(None, _path.write_text, _full_text, "utf-8")
-                await _rag.insert(_full_text)
+                _full_texts.append(_full_text)
             finally:
                 await _loop.run_in_executor(None, Path(_tmp_path).unlink, True)
-
-    @rx.event(background=True)
-    async def poll_state(self):
-        while True:
-            _data = await _rag.get_graph_data()
-            if _data.get("nodes"):
-                async with self:
-                    self.parsing_files = []
-                    self.graph_data = _data
-                return
-            await asyncio.sleep(2)
+        if _full_texts:
+            _combined = "\n\n".join(_full_texts)
+            async with self:
+                self.rag_doc_text = _combined
+                self.rag_doc_counter += 1
 
     @rx.event
     async def send_message(self):
@@ -167,22 +183,72 @@ class AppState(rx.State):
             {"role": _m["role"], "content": _m["content"]}
             for _m in self.chat_messages[:-1]
         ]
+        _mode = self.settings_query_mode
+        _sys_prompt = (
+            BLACKBOARDLM_NAIVE_SYSTEM_PROMPT if _mode == "naive"
+            else BLACKBOARDLM_RAG_SYSTEM_PROMPT
+        )
+        _user_prompt = PRESET_MODES.get(self.selected_preset, "")
+        if _user_prompt:
+            _sys_prompt += "\n\n" + _user_prompt
+        _sys_prompt = _sys_prompt.format(response_type=self.settings_response_type)
+        _params = {
+            "question": _question,
+            "mode": _mode,
+            "systemPrompt": _sys_prompt,
+            "history": _history,
+        }
         self.is_processing = True
+        self.rag_query_params = json.dumps(_params, ensure_ascii=False)
+        self.rag_query_counter += 1
         yield
-        async for _chunk in _rag.query(
-            _question,
-            mode=self.settings_query_mode,
-            conversation_history=_history,
-            user_prompt=PRESET_MODES.get(self.selected_preset, ""),
-            response_type=self.settings_response_type,
-        ):
-            if not self.chat_messages or self.chat_messages[-1]["role"] != "assistant":
-                self.chat_messages.append({"role": "assistant", "content": _chunk})
-            else:
-                self.chat_messages[-1]["content"] += _chunk
-            yield
+
+    @rx.event
+    def on_chat_chunk(self, chunk: str):
+        if not self.chat_messages or self.chat_messages[-1]["role"] != "assistant":
+            self.chat_messages.append({"role": "assistant", "content": chunk})
+        else:
+            self.chat_messages[-1]["content"] += chunk
+
+    @rx.event
+    def on_chat_done(self):
         self.is_processing = False
-        yield
+
+    @rx.event
+    def on_rag_insert_done(self, graph_json: str):
+        self.parsing_files = []
+        try:
+            self.graph_data = json.loads(graph_json)
+        except Exception:
+            pass
+
+    @rx.event
+    def on_rag_graph_update(self, graph_json: str):
+        try:
+            self.graph_data = json.loads(graph_json)
+        except Exception:
+            pass
+
+    @rx.event
+    def on_rag_error(self, error: str):
+        self.rag_status = error
+
+    @rx.event
+    def on_rag_model_progress(self, loaded: int, total: int, file: str):
+        if total > 0:
+            self.rag_model_progress = int(loaded * 100 / total)
+            self.rag_status = f"Downloading model: {self.rag_model_progress}%"
+
+    @rx.event
+    def on_rag_insert_progress(self, total: int, ready: int):
+        self.rag_insert_ready = ready
+        self.rag_insert_total = total
+        self.rag_status = f"Processing document: {ready}/{total} chunks"
+
+    @rx.event
+    def on_rag_worker_ready(self):
+        self.rag_worker_ready = True
+        self.rag_status = ""
 
     @rx.event
     def set_input(self, value: str):
@@ -245,6 +311,7 @@ class AppState(rx.State):
         for _key, _val in _restart_keys:
             _write_env(_key, _val)
         self.settings_saved = True
+        self.rag_config_updated = not self.rag_config_updated
 
     @rx.event
     def set_login_password(self, _value: str):
@@ -283,7 +350,6 @@ class AppState(rx.State):
     @rx.event(background=True)
     async def clear_all_data(self):
         _loop = asyncio.get_running_loop()
-        await _rag.reset()
         if await _loop.run_in_executor(None, _PREVIEW_DIR.exists):
             _f_list = await _loop.run_in_executor(None, lambda d=_PREVIEW_DIR: list(d.iterdir()))
             for _f in _f_list:
@@ -297,3 +363,8 @@ class AppState(rx.State):
             self.graph_data = {"nodes": [], "edges": []}
             self.clear_done = True
             self._uploaded_hashes = set()
+            self.rag_status = ""
+            self.rag_model_progress = 0
+            self.rag_insert_ready = 0
+            self.rag_insert_total = 0
+            self.rag_reset_counter += 1

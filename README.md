@@ -2,7 +2,7 @@
 
 **Your documents, grounded answers.** Upload your materials, ask questions, and get AI-powered insights backed by your sources — like having a research partner who has read everything you've shared.
 
-Built with [Reflex](https://reflex.dev), powered by [MarkitDown](https://github.com/microsoft/markitdown) for document parsing and [lightrag](https://github.com/winterist/BlackboardLM) for knowledge-graph retrieval. Runs with any DeepSeek-compatible API.
+Built with [Reflex](https://reflex.dev), powered by [MarkitDown](https://github.com/microsoft/markitdown) for document parsing and [lightrag](https://github.com/winterist/BlackboardLM) for browser-side knowledge-graph RAG. No Node.js required — bring your own DeepSeek-compatible API key.
 
 ---
 
@@ -35,11 +35,11 @@ Every answer is anchored in your documents. BlackboardLM reads your uploaded fil
 
 ### 📄 Document Upload & Parsing
 
-Drag and drop PDF, DOCX, PPTX, XLSX, TXT, Markdown, HTML, EPUB, JPG, PNG, TIFF, CSV, JSON, or XML. Files are automatically parsed, indexed, and turned into a searchable knowledge base. Click any uploaded file to preview its full content rendered as Markdown.
+Drag and drop PDF, DOCX, PPTX, XLSX, TXT, Markdown, HTML, EPUB, JPG, PNG, TIFF, CSV, JSON, or XML. Files are automatically parsed by MarkitDown on the Python backend, then indexed by the browser-side LightRAG engine into a searchable knowledge base. Click any uploaded file to preview its full content rendered as Markdown.
 
 ### 🕸️ Knowledge Graph
 
-Every document set generates an interactive knowledge graph showing key entities and their relationships. The graph visualizes the conceptual structure of your materials — click the toggle to expand or collapse it. Nodes are sized by importance and color-coded by entity type.
+Every document set generates an interactive knowledge graph showing key entities and their relationships. The graph visualizes the conceptual structure of your materials — click the toggle to expand or collapse it. Nodes are sized by importance and color-coded by entity type. Graph data persists via IndexedDB and is restored on page reload.
 
 ### 🎛️ 8 Preset Conversation Modes
 
@@ -105,10 +105,10 @@ Adapts gracefully from desktop to mobile, with a scrollable document shelf, coll
 |---|---|
 | Framework | [Reflex](https://reflex.dev) (Tailwind v4, Radix Themes) |
 | Document Parsing | [MarkitDown](https://github.com/microsoft/markitdown) — 15 formats (PDF, DOCX, PPTX, XLSX, EPUB, HTML, MD, TXT, JPG, PNG, TIFF, CSV, JSON, XML) |
-| Knowledge Graph RAG | [lightrag](https://github.com/winterist/BlackboardLM) — self-built npm package, in-memory graph + vector DB |
-| LLM | DeepSeek API via OpenAI Python SDK |
-| Embedding | `Xenova/multilingual-e5-small` via Transformers.js, 384-dim |
-| Graph Visualization | Cytoscape.js, async CDN injection |
+| Knowledge Graph RAG | [lightrag](https://github.com/winterist/BlackboardLM) — browser-side Web Worker, in-memory graph + vector DB, IndexedDB persistence |
+| LLM | DeepSeek-compatible API, called directly from browser via `fetch` |
+| Embedding | `Xenova/multilingual-e5-small` via Transformers.js (WASM), 384-dim. Model files downloaded from HuggingFace, with automatic `hf-mirror.com` fallback |
+| Graph Visualization | Cytoscape.js, loaded from UNPKG CDN |
 | Vector DB | In-memory cosine similarity (lightrag built-in) |
 
 ---
@@ -120,16 +120,20 @@ BlackboardLM/
 ├── rxconfig.py                     # Reflex entry point
 ├── requirements.txt                # Python dependencies
 ├── .env                            # Environment variables
+├── assets/
+│   ├── favicon.ico
+│   ├── rag.worker.js               # LightRAG + Transformers.js Web Worker
+│   └── rag_bridge.js               # Main-thread bridge (Worker ↔ Reflex state)
 ├── BlackboardLM/
 │   ├── BlackboardLM.py             # App entry
-│   ├── state.py                    # Global state (Reflex State)
+│   ├── state.py                    # Global state & bridge event handlers
 │   ├── config/
-│   │   ├── settings.py             # Env loading & .env write-back
+│   │   ├── settings.py             # Env loading, HF mirror detection, .env write-back
 │   │   ├── theme.py                # Dual theme definitions
 │   │   └── prompts.py              # System prompts & preset modes
 │   ├── components/
-│   │   ├── layout.py               # Page layout & loading screen
-│   │   ├── styles.py               # Global CSS & JS
+│   │   ├── layout.py               # Page layout, hidden bridge divs
+│   │   ├── styles.py               # Global CSS & JS (Cytoscape, bridge loader)
 │   │   ├── header.py               # Nav bar & theme switcher
 │   │   ├── settings_panel.py       # Settings drawer
 │   │   ├── auth.py                 # Login card
@@ -138,25 +142,24 @@ BlackboardLM/
 │   │   ├── chat.py                 # Chat message bubbles
 │   │   ├── input_bar.py            # Input field & preset chips
 │   │   └── decorations.py          # Background particles
-│   ├── llm/
-│   │   └── client.py               # DeepSeek API client
 │   ├── rag/
-│   │   └── engine.py               # LightRAG engine wrapper
+│   │   └── engine.py               # LLM & HF endpoint config provider
 │   └── pipeline/
 │       └── parsers/
 │           ├── base.py             # Abstract parser interface
 │           └── markitdown_parser.py # MarkitDown document parser
-├── lightrag/
-│   ├── package.json
-│   ├── server.js
-│   └── src/
-│       ├── chunker.js
-│       ├── embedder.js
-│       ├── graph.js
-│       ├── lightrag.js
-│       ├── prompts.js
-│       ├── vector_db.js
-│       └── index.js
+└── lightrag/
+    ├── package.json
+    ├── server.js                   # Node.js entry (for standalone/CLI use)
+    └── src/
+        ├── index.js                # Node.js exports
+        ├── lightrag.js             # Core RAG engine
+        ├── vector_db.js            # In-memory cosine-similarity vector DB
+        ├── graph.js                # Knowledge graph
+        ├── chunker.js              # Token-based text chunker
+        ├── embedder.js             # Transformers.js embedding wrapper
+        ├── prompts.js              # Entity extraction prompt
+        └── storage.js              # IndexedDB persistence (browser)
 ```
 
 ---
@@ -169,13 +172,7 @@ BlackboardLM/
 pip install -r requirements.txt
 ```
 
-### 2. Install Node.js dependencies
-
-```bash
-cd lightrag && npm install && cd ..
-```
-
-### 3. Configure your API key
+### 2. Configure your API key
 
 Edit `.env`:
 
@@ -186,7 +183,7 @@ DEEPSEEK_BASE_URL=https://api.deepseek.com
 
 All other settings have sensible defaults and can be changed via the Settings panel.
 
-### 4. Run
+### 3. Run
 
 ```bash
 reflex init
@@ -194,6 +191,8 @@ reflex run
 ```
 
 Open `http://localhost:3000`.
+
+On first launch, Transformers.js downloads the embedding model from HuggingFace (~470 MB). If `huggingface.co` is unreachable, the app automatically falls back to `hf-mirror.com`. The model is cached by your browser for instant reuse on subsequent loads. A progress indicator shows download and indexing status.
 
 ---
 
@@ -205,11 +204,11 @@ Drag files directly onto the upload zone at the top of the page, or click it to 
 
 Supported formats: PDF, DOCX, PPTX, XLSX, TXT, Markdown, HTML, EPUB, JPG, PNG, TIFF, CSV, JSON, XML.
 
-Behind the scenes, each uploaded file is parsed, its entities and relationships are extracted into a knowledge graph, and the full text is chunked and indexed for retrieval — all automatically.
+Behind the scenes: the Python backend parses each document with MarkitDown, sends the text to the browser, and the LightRAG Web Worker chunks, embeds, and extracts entities — all while showing live progress.
 
 ### 💬 Asking Questions
 
-Type your question and press **Enter** (use **Shift+Enter** for newlines). BlackboardLM generates an answer grounded in your sources (in retrieval modes) or responds directly based on its knowledge (in naive mode). Each response includes:
+Type your question and press **Enter** (use **Shift+Enter** for newlines). The browser-side LightRAG engine retrieves relevant context from your documents, then calls the LLM API directly for a streaming answer. Each response includes:
 
 - **Inline citations** — `[1]`, `[2]` linking to your documents
 - **References** — a list of cited sources at the end
@@ -266,7 +265,7 @@ All values can be changed at runtime via the Settings panel.
 
 ### HuggingFace Mirror
 
-On startup, BlackboardLM checks connectivity to `huggingface.co`. If unreachable (e.g., from mainland China), it automatically sets `HF_ENDPOINT=https://hf-mirror.com` so the embedding model can still be downloaded.
+On startup, BlackboardLM checks connectivity to `huggingface.co`. If unreachable (e.g., from mainland China), it sets `HF_ENDPOINT=https://hf-mirror.com`. This endpoint is passed to the browser-side Transformers.js Worker so the embedding model can be downloaded via the mirror.
 
 ---
 
@@ -287,7 +286,7 @@ Constraints          → No one-line answers, no fabrication, always close with 
 When a preset is selected, its instruction is appended as an additional directive.
 ```
 
-Context is injected by the lightrag query engine — vector chunks for local/hybrid/mix modes, knowledge graph entities for global/hybrid/mix modes. The `{response_type}` placeholder in the prompt is formatted at query time from the Settings value.
+Context is injected by the browser-side lightrag engine — vector chunks for local/hybrid/mix modes, knowledge graph entities for global/hybrid/mix modes. The `{response_type}` placeholder in the prompt is formatted at query time from the Settings value.
 
 ---
 
