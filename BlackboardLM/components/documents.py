@@ -12,6 +12,9 @@ _ACCEPT = {
     "image/jpeg": [".jpg", ".jpeg"],
     "image/png": [".png"],
     "image/tiff": [".tiff", ".tif"],
+    "text/csv": [".csv"],
+    "application/json": [".json"],
+    "application/xml": [".xml"],
 }
 
 def _doc_card(filename: str) -> rx.Component:

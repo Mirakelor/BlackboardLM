@@ -31,7 +31,7 @@ Built with [Reflex](https://reflex.dev), powered by [MarkitDown](https://github.
 
 ### 📎 Grounded Answers with Source Citations
 
-Every answer is anchored in your documents. BlackboardLM reads your uploaded files, builds a knowledge graph, and retrieves the most relevant information for each question. Responses come with inline citations (`[1]`, `[2]`) linking back to your sources, plus a References section and suggested follow-up questions to deepen your exploration.
+Every answer is anchored in your documents. BlackboardLM reads your uploaded files, builds a knowledge graph, and retrieves the most relevant information for each question. The system prompt instructs the model to provide inline citations (`[1]`, `[2]`), a References section, and suggested follow-up questions to deepen your exploration.
 
 ### 📄 Document Upload & Parsing
 
@@ -85,9 +85,9 @@ When no password is set, the app opens directly without authentication — ideal
 
 ### ⚙️ Settings Panel
 
-A slide-out drawer for live configuration. Change your API key, model, thinking mode, reasoning effort, output length, retrieval strategy, and response style without restarting the app. Settings persist to `.env` and take effect on the next request.
+A slide-out drawer for live configuration. Change your API key, base URL, model, thinking mode, reasoning effort, output length, retrieval strategy, and response style without restarting the app. Settings persist to `.env` and take effect on the next request.
 
-A **Clear All Data** button resets everything — knowledge graph, indexed documents, chat history, and cached previews — returning the app to a fresh state. When authentication is enabled, a **Logout** button is also available.
+A **Clear All Data** button resets everything — knowledge graph, indexed documents, chat history, cached previews, and dedup records — returning the app to a fresh state. When authentication is enabled, a **Logout** button is also available.
 
 ### 🐱 Loading Screen
 
@@ -107,7 +107,7 @@ Adapts gracefully from desktop to mobile, with a scrollable document shelf, coll
 | Document Parsing | [MarkitDown](https://github.com/microsoft/markitdown) — 15 formats (PDF, DOCX, PPTX, XLSX, EPUB, HTML, MD, TXT, JPG, PNG, TIFF, CSV, JSON, XML) |
 | Knowledge Graph RAG | [lightrag](https://github.com/winterist/BlackboardLM) — self-built npm package, in-memory graph + vector DB |
 | LLM | DeepSeek API via OpenAI Python SDK |
-| Embedding | `Xenova/multilingual-e5-small` via Transformers.js — runs in Node.js subprocess, 384-dim |
+| Embedding | `Xenova/multilingual-e5-small` via Transformers.js, 384-dim |
 | Graph Visualization | Cytoscape.js, async CDN injection |
 | Vector DB | In-memory cosine similarity (lightrag built-in) |
 

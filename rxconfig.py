@@ -5,7 +5,7 @@ os.environ.setdefault(
     "REFLEX_HOT_RELOAD_EXCLUDE_PATHS",
     str(Path(__file__).resolve().parent.joinpath(".env")),
 )
-os.environ.setdefault("ACCESS_PASSWORD", "fDu060927")
+os.environ.setdefault("ACCESS_PASSWORD", "")
 
 import reflex as rx
 
