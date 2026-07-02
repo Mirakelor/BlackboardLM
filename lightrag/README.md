@@ -66,7 +66,7 @@ await _rag.insert(documentText);
 const _context = await _rag.buildContext(question, 'hybrid');
 ```
 
-See the [BlackboardLM](https://github.com/winterist/BlackboardLM) project for a complete browser integration example using Web Workers, IndexedDB persistence, and streaming LLM responses.
+See the [BlackboardLM](https://github.com/Mirakelor/BlackboardLM) project for a complete browser integration example using Web Workers, IndexedDB persistence, and streaming LLM responses.
 
 ## API
 

@@ -2,7 +2,7 @@
 
 **Your documents, grounded answers.** Upload your materials, ask questions, and get AI-powered insights backed by your sources — like having a research partner who has read everything you've shared.
 
-Built with [Reflex](https://reflex.dev), powered by [MarkitDown](https://github.com/microsoft/markitdown) for document parsing and [lightrag](https://github.com/winterist/BlackboardLM) for browser-side knowledge-graph RAG. No Node.js required — bring your own DeepSeek-compatible API key.
+Built with [Reflex](https://reflex.dev), powered by [MarkitDown](https://github.com/microsoft/markitdown) for document parsing and [lightrag](https://github.com/Mirakelor/BlackboardLM) for browser-side knowledge-graph RAG. No Node.js required — bring your own DeepSeek-compatible API key.
 
 ---
 
@@ -105,7 +105,7 @@ Adapts gracefully from desktop to mobile, with a scrollable document shelf, coll
 |---|---|
 | Framework | [Reflex](https://reflex.dev) (Tailwind v4, Radix Themes) |
 | Document Parsing | [MarkitDown](https://github.com/microsoft/markitdown) — 15 formats (PDF, DOCX, PPTX, XLSX, EPUB, HTML, MD, TXT, JPG, PNG, TIFF, CSV, JSON, XML) |
-| Knowledge Graph RAG | [lightrag](https://github.com/winterist/BlackboardLM) — browser-side Web Worker, in-memory graph + vector DB, IndexedDB persistence |
+| Knowledge Graph RAG | [lightrag](https://github.com/Mirakelor/BlackboardLM) — browser-side Web Worker, in-memory graph + vector DB, IndexedDB persistence |
 | LLM | DeepSeek-compatible API, called directly from browser via `fetch` |
 | Embedding | `Xenova/multilingual-e5-small` via Transformers.js (WASM), 384-dim. Model files downloaded from HuggingFace, with automatic `hf-mirror.com` fallback |
 | Graph Visualization | Cytoscape.js, loaded from UNPKG CDN |
