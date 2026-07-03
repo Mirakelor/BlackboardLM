@@ -3,8 +3,8 @@ const { LightRAG, Embedder } = require('./src/index');
 const fs = require('fs');
 
 env.remoteHost = process.env.HF_REMOTE_HOST || 'https://huggingface.co/';
-const MODEL_NAME = process.env.TRANSFORMERS_JS_MODEL || 'Xenova/multilingual-e5-small';
-const STORAGE_FILE = (process.env.LIGHTRAG_STORAGE || '/tmp/blackboardlm_rag.json');
+const _MODEL_NAME = process.env.TRANSFORMERS_JS_MODEL || 'Xenova/multilingual-e5-small';
+const _STORAGE_FILE = (process.env.LIGHTRAG_STORAGE || '/tmp/blackboardlm_rag.json');
 
 let _rag = null;
 let _pipe = null;
@@ -61,7 +61,7 @@ async function _llmFunc(prompt, opts = {}) {
 
 async function _init() {
     const _start = Date.now();
-    _pipe = await pipeline('feature-extraction', MODEL_NAME, {
+    _pipe = await pipeline('feature-extraction', _MODEL_NAME, {
         dtype: 'fp32',
         progress_callback: (_info) => {
             if (_info.status === 'progress' && _info.total) {
@@ -70,9 +70,9 @@ async function _init() {
         },
     });
     const _embedder = new Embedder(_pipe);
-    if (fs.existsSync(STORAGE_FILE)) {
+    if (fs.existsSync(_STORAGE_FILE)) {
         try {
-            const _json = JSON.parse(fs.readFileSync(STORAGE_FILE, 'utf-8'));
+            const _json = JSON.parse(fs.readFileSync(_STORAGE_FILE, 'utf-8'));
             _rag = LightRAG.fromJSON(_json, { embedder: _embedder, llmFunc: _llmFunc, tokenizer: _pipe.tokenizer });
         } catch (_e) {
             _rag = new LightRAG({ embedder: _embedder, llmFunc: _llmFunc, tokenizer: _pipe.tokenizer });
@@ -81,15 +81,15 @@ async function _init() {
         _rag = new LightRAG({ embedder: _embedder, llmFunc: _llmFunc, tokenizer: _pipe.tokenizer });
     }
     const _elapsed = Date.now() - _start;
-    process.stderr.write(JSON.stringify({ status: 'ready', model: MODEL_NAME, init_ms: _elapsed, loaded: _rag._vdb.size > 0 }) + '\n');
+    process.stderr.write(JSON.stringify({ status: 'ready', model: _MODEL_NAME, init_ms: _elapsed, loaded: _rag._vdb.size > 0 }) + '\n');
 }
 
 function _save() {
-    fs.writeFileSync(STORAGE_FILE, JSON.stringify(_rag.toJSON()), 'utf-8');
+    fs.writeFileSync(_STORAGE_FILE, JSON.stringify(_rag.toJSON()), 'utf-8');
 }
 
 function _clearStorage() {
-    if (fs.existsSync(STORAGE_FILE)) fs.unlinkSync(STORAGE_FILE);
+    if (fs.existsSync(_STORAGE_FILE)) fs.unlinkSync(_STORAGE_FILE);
 }
 
 async function _handle(req) {
@@ -99,7 +99,7 @@ async function _handle(req) {
             console.error(`[Server] Inserting text (${(req.text || '').length} chars)`);
             await _rag.insert(req.text);
             _save();
-            console.error(`[Server] Insert done, saved to ${STORAGE_FILE}`);
+            console.error(`[Server] Insert done, saved to ${_STORAGE_FILE}`);
             return { ok: true, progress: _rag.getProgress() };
         case 'query': {
             console.error(`[Server] Query: mode=${req.mode || 'hybrid'}, history_len=${(req.history || []).length}`);
@@ -123,8 +123,8 @@ async function _handle(req) {
             _save();
             return { ok: true };
         case 'load':
-            if (fs.existsSync(STORAGE_FILE)) {
-                const _json = JSON.parse(fs.readFileSync(STORAGE_FILE, 'utf-8'));
+            if (fs.existsSync(_STORAGE_FILE)) {
+                const _json = JSON.parse(fs.readFileSync(_STORAGE_FILE, 'utf-8'));
                 const { LightRAG: _LR2, Embedder: _E2 } = require('./src/index');
                 _rag = LightRAG.fromJSON(_json, { embedder: new _E2(_pipe), llmFunc: _llmFunc, tokenizer: _pipe.tokenizer });
                 return { ok: true, loaded: _rag._vdb.size > 0 };

@@ -1,6 +1,6 @@
 {
   "name": "lightrag",
-  "version": "1.1.1",
+  "version": "1.1.3",
   "description": "Lightweight RAG library with knowledge graph — runs in Node.js and browsers (Web Worker, no bundler), MIT licensed",
   "main": "src/index.js",
   "browser": "src/index.js",

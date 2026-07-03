@@ -13,14 +13,6 @@ if _env_file.exists():
 
 os.environ.setdefault("REFLEX_UPLOADED_FILES_DIR", str(Path(tempfile.gettempdir()).joinpath("blackboardlm_uploads")))
 
-if not os.getenv("HF_ENDPOINT"):
-    try:
-        import urllib.request
-        _req = urllib.request.Request("https://huggingface.co", method="HEAD")
-        urllib.request.urlopen(_req, timeout=5).close()
-    except Exception:
-        os.environ["HF_ENDPOINT"] = "https://hf-mirror.com"
-
 def _write_env(_key: str, _value: str):
     _lines = []
     if _env_file.exists():

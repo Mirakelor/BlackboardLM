@@ -117,6 +117,8 @@ class LightRAG {
 
     getProgress() { return { ...this._progress }; }
 
+    get vdbSize() { return this._vdb.size; }
+
     toJSON() {
         return {
             embeddingDim: this._embeddingDim,

@@ -2,7 +2,7 @@
 
 **Your documents, grounded answers.** Upload your materials, ask questions, and get AI-powered insights backed by your sources — like having a research partner who has read everything you've shared.
 
-Built with [Reflex](https://reflex.dev), powered by [MarkitDown](https://github.com/microsoft/markitdown) for document parsing and [lightrag](https://github.com/Mirakelor/BlackboardLM) for browser-side knowledge-graph RAG. No Node.js required — bring your own DeepSeek-compatible API key.
+Built with [Reflex](https://reflex.dev), powered by [MarkitDown](https://github.com/microsoft/markitdown) for document parsing and a browser-side LightRAG Web Worker for knowledge-graph RAG. No Node.js required — bring your own DeepSeek-compatible API key. Model files are downloaded directly from HuggingFace by the browser.
 
 ---
 
@@ -12,6 +12,7 @@ Built with [Reflex](https://reflex.dev), powered by [MarkitDown](https://github.
 - [Tech Stack](#tech-stack)
 - [Project Structure](#project-structure)
 - [Getting Started](#getting-started)
+- [Deploy to Reflex Cloud](#-deploy-to-reflex-cloud)
 - [Usage](#usage)
   - [Authentication](#authentication)
   - [Uploading Documents](#uploading-documents)
@@ -73,7 +74,7 @@ Choose how BlackboardLM searches your documents:
 | Theme | Style |
 |---|---|
 | 🏰 **Flourish & Blotts** | Dark magical-academia aesthetic, parchment textures, candlelight flicker, floating star particles |
-| 🌸 **Shiori (栞)** | Light Japanese bookmark-shop aesthetic, muted pinks and greens, falling sakura petals |
+| 🌸 **栞 (Shiori)** | Light Japanese bookmark-shop aesthetic, muted pinks and greens, falling sakura petals |
 
 Each theme comes with its own color palette, typography, microcopy, and background animations — every text label and placeholder adapts to the theme.
 
@@ -105,9 +106,9 @@ Adapts gracefully from desktop to mobile, with a scrollable document shelf, coll
 |---|---|
 | Framework | [Reflex](https://reflex.dev) (Tailwind v4, Radix Themes) |
 | Document Parsing | [MarkitDown](https://github.com/microsoft/markitdown) — 15 formats (PDF, DOCX, PPTX, XLSX, EPUB, HTML, MD, TXT, JPG, JPEG, PNG, TIFF, CSV, JSON, XML) |
-| Knowledge Graph RAG | [lightrag](https://github.com/Mirakelor/BlackboardLM) — browser-side Web Worker, in-memory graph + vector DB, IndexedDB persistence |
+| Knowledge Graph RAG | Browser-side Web Worker (LightRAG architecture), in-memory graph + vector DB, IndexedDB persistence |
 | LLM | DeepSeek-compatible API, called directly from browser via `fetch` |
-| Embedding | `Xenova/multilingual-e5-small` via Transformers.js (WASM), 384-dim. Model files served through a local proxy (`/api/hf-proxy`) to avoid CORS issues, with automatic `hf-mirror.com` fallback on the backend |
+| Embedding | `Xenova/multilingual-e5-small` via Transformers.js (WASM), 384-dim. Model files downloaded directly from HuggingFace by the browser |
 | Graph Visualization | Cytoscape.js, loaded from unpkg CDN |
 | Vector DB | In-memory cosine similarity (lightrag built-in) |
 
@@ -128,7 +129,7 @@ BlackboardLM/
 │   ├── BlackboardLM.py             # App entry
 │   ├── state.py                    # Global state & bridge event handlers
 │   ├── config/
-│   │   ├── settings.py             # Env loading, HF mirror detection, .env write-back
+│   │   ├── settings.py             # Env loading, defaults, .env write-back
 │   │   ├── theme.py                # Dual theme definitions
 │   │   └── prompts.py              # System prompts & preset modes
 │   ├── components/
@@ -142,7 +143,6 @@ BlackboardLM/
 │   │   ├── chat.py                 # Chat message bubbles
 │   │   ├── input_bar.py            # Input field & preset chips
 │   │   └── decorations.py          # Background particles
-│   ├── proxy_api.py                # HF model proxy (CORS-free)
 │   ├── rag/
 │   │   └── engine.py               # LLM config provider
 │   └── pipeline/
@@ -191,9 +191,67 @@ reflex init
 reflex run
 ```
 
-Open `http://localhost:3000`.
+Open `http://localhost:3000` (dev mode). In production, the app runs on a single port (`http://localhost:8000`).
 
-On first launch, the embedding model (~470 MB) is downloaded through a local proxy (`/api/hf-proxy`) which routes requests to HuggingFace (or `hf-mirror.com` if `huggingface.co` is unreachable). The model is cached by your browser for instant reuse on subsequent loads. A progress indicator shows download and indexing status.
+On first launch, the embedding model (~470 MB) is downloaded directly from HuggingFace. The model is cached by your browser for instant reuse on subsequent loads. A progress indicator shows download and indexing status.
+
+---
+
+## ☁️ Deploy to Reflex Cloud
+
+Reflex Cloud deploys your app to Fly.io behind a custom domain in one command. No Docker, no CI/CD, no YAML.
+
+### Prerequisites
+
+- [Fork this repository](https://github.com/Mirakelor/BlackboardLM/fork) to your own GitHub account
+- A [Reflex Cloud](https://reflex.dev) account
+- `reflex` CLI installed (`pip install reflex`) and authenticated:
+
+```bash
+reflex login
+```
+
+This opens your browser to sign in with GitHub or Google. After login, go to the [Reflex Cloud dashboard](https://cloud.reflex.dev), create a new project, and copy the `reflex deploy` command — it contains your project's access token:
+
+```bash
+reflex deploy --project <your-project-id>
+```
+
+### Step 1 — Set your password
+
+Open `rxconfig.py` and set a login password for your app:
+
+```python
+os.environ.setdefault("ACCESS_PASSWORD", "your-password-here")
+```
+
+Leave it `""` to skip authentication.
+
+### Step 2 — Deploy
+
+Run the deploy command from the Cloud dashboard:
+
+```bash
+reflex deploy --project <your-project-id>
+```
+
+Press Enter at the interactive prompts. The CLI compiles your app, uploads it, and the build continues in the background. You can close the terminal once the upload finishes.
+
+### Step 3 — Configure your API key
+
+Once deployed, open your app and click the gear icon in the header to open the **Settings** panel. Fill in your `DEEPSEEK_API_KEY` and click **Save & Apply** — settings take effect immediately, no restart needed.
+
+You can also set environment variables from the Cloud dashboard under **Settings** → **API Keys**, or pass them at deploy time with `--env`:
+
+```bash
+reflex deploy --project <id> --env DEEPSEEK_API_KEY=sk-your-key
+```
+
+### Step 4 — Update your app
+
+After making code changes, simply run `reflex deploy --project <your-project-id>` again. Settings configured through the in-app panel persist across deploys — only code changes require a re-deploy.
+
+> **Note:** The embedding model (`Xenova/multilingual-e5-small`, ~470 MB) is downloaded directly from HuggingFace by each user's browser on first visit. No server bandwidth cost for model serving.
 
 ---
 
@@ -203,7 +261,7 @@ On first launch, the embedding model (~470 MB) is downloaded through a local pro
 
 Drag files directly onto the upload zone at the top of the page, or click it to open your system file picker. You can upload multiple files in one go — they appear as cards in a horizontally scrollable shelf. While a file is being parsed, its card shows a spinner. Once ready, click any card to expand a document preview panel with the full Markdown-rendered content, including tables.
 
-Supported formats: PDF, DOCX, PPTX, XLSX, TXT, Markdown, HTML, EPUB, JPG, PNG, TIFF, CSV, JSON, XML.
+Supported formats: PDF, DOCX, PPTX, XLSX, TXT, Markdown, HTML, EPUB, JPG, JPEG, PNG, TIFF, CSV, JSON, XML.
 
 Behind the scenes: the Python backend parses each document with MarkitDown, sends the text to the browser, and the LightRAG Web Worker chunks, embeds, and extracts entities — all while showing live progress.
 
@@ -235,9 +293,9 @@ Control how BlackboardLM retrieves information from your documents via the **Que
 
 ### 🎨 Themes
 
-Two theme chips sit in the top navigation bar: **🏰 Flourish & Blotts** (dark magical-academia) and **🌸 Shiori** (light Japanese). Click either to switch instantly — colors, fonts, background particles, button styles, and all microcopy change together. The active theme is saved to `.env` (`THEME=sakura` or `THEME=hogwarts`) and restored on next launch.
+Two theme chips sit in the top navigation bar: **🏰 Flourish & Blotts** (dark magical-academia) and **🌸 栞** (light Japanese). Click either to switch instantly — colors, fonts, background particles, button styles, and all microcopy change together. The active theme is read from the `THEME` env var on startup and defaults to `sakura`.
 
-All theme data lives in `config/theme.py` as two `Theme` dataclass instances. Adding a new theme means creating a third instance and registering it in `header.py`.
+All theme data lives in `config/theme.py` as two `Theme` dataclass instances. Adding a new theme means creating a third instance, adding it to `THEMES` dict, updating the conditional in `layout._main_app()`, and registering a switch chip in `header.py`.
 
 ### ⚙️ Settings Panel
 
@@ -261,13 +319,7 @@ Click the gear icon in the header to open the settings drawer. Configure your AP
 | `QUERY_MODE` | `naive` | Default retrieval strategy |
 | `RESPONSE_TYPE` | `Multiple Paragraphs` | Response formatting style |
 | `THEME` | `sakura` | Default theme (`sakura` / `hogwarts`) |
-| `HF_ENDPOINT` | *(auto-detected)* | HuggingFace mirror endpoint (default: `https://huggingface.co`, fallback `https://hf-mirror.com`) |
-
 All values can be changed at runtime via the Settings panel.
-
-### HuggingFace Mirror
-
-On startup, the Python backend checks connectivity to `huggingface.co`. If unreachable, it sets `HF_ENDPOINT=https://hf-mirror.com` and all subsequent model proxy requests are routed to the mirror. The embedding model is served to the browser through a local proxy (`/api/hf-proxy`) that routes requests to the configured endpoint. Reflex automatically proxies `/api/*` requests from the frontend to the backend, so the browser always requests from the same origin.
 
 ---
 

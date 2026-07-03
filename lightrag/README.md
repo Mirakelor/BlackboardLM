@@ -129,13 +129,93 @@ Serialize/deserialize the entire RAG state (vector DB + knowledge graph). Use wi
 `lightrag/src/storage.js` provides a simple IndexedDB wrapper for persisting RAG state:
 
 ```js
-import { Storage } from 'lightrag/src/storage.js';
+const { Storage } = require('lightrag/src/storage.js');
 
 await Storage.save('rag_state', rag.toJSON());
 const _data = await Storage.load('rag_state');
 const _rag = LightRAG.fromJSON(_data, opts);
 await Storage.clear();
 ```
+
+## Embedder
+
+### `new Embedder(pipeline)`
+
+Wraps a Transformers.js `feature-extraction` pipeline for embedding text.
+
+| Method | Description |
+|--------|-------------|
+| `embedder.embed(texts, context)` | Embed an array of strings. `context` is `'document'` (default, prefix `'passage: '`) or `'query'` (prefix `'query: '`). Returns `number[][]`. |
+| `embedder.embedQuery(query)` | Shorthand for `embed([query], 'query')` — returns `number[]`. |
+| `embedder.embedDocuments(docs)` | Shorthand for `embed(docs, 'document')` — returns `number[][]`. |
+
+## TokenChunker
+
+### `new TokenChunker(tokenizer, tokenLimit, overlapTokens)`
+
+Splits text into overlapping chunks. When `tokenizer` is provided (e.g., `pipe.tokenizer`), chunks are measured in tokens. Without a tokenizer, falls back to character-based chunking (3000 chars per chunk, 150 char overlap).
+
+```js
+const { TokenChunker } = require('lightrag');
+const _chunker = new TokenChunker(pipe.tokenizer, 480, 50);
+const _chunks = _chunker.chunk('Long document text...');
+```
+
+## VectorDB
+
+### `new VectorDB(dim)`
+
+In-memory cosine-similarity vector database.
+
+| Method | Description |
+|--------|-------------|
+| `vdb.upsert(entries)` | Insert or update `[{id, vector, text}]` entries |
+| `vdb.query(vector, topK)` | Return top-K similar entries as `[{id, text, score}]` |
+| `vdb.size` | Getter — number of stored vectors |
+| `vdb.toJSON()` | Serialize to plain object |
+| `VectorDB.fromJSON(data)` | Static — deserialize |
+
+## KnowledgeGraph
+
+### `new KnowledgeGraph()`
+
+In-memory entity-relation knowledge graph.
+
+| Method | Description |
+|--------|-------------|
+| `graph.upsertNode(id, data)` | Add/update a node with `{entity_type, description, source_id}` |
+| `graph.upsertEdge(source, target, data)` | Add an edge with `{keywords, weight, source_id}` |
+| `graph.getNeighbors(id, maxDegree)` | Get neighbor nodes with edge data |
+| `graph.getNode(id)` | Get a single node by ID |
+| `graph.getAllNodes()` | Returns all nodes with `{id, entity_type, description, degree}` |
+| `graph.getAllEdges()` | Returns all edges with `{source, target, keywords, weight}` |
+| `graph.size` | Getter — number of nodes |
+| `graph.toJSON()` | Serialize to plain object |
+| `KnowledgeGraph.fromJSON(data)` | Static — deserialize |
+
+## Entity Extraction Prompt
+
+```js
+const { ENTITY_EXTRACTION_PROMPT } = require('lightrag');
+```
+
+The prompt template used by `LightRAG._extractEntities()`. Contains `{text}` placeholder replaced with each chunk's content at extraction time.
+
+## Server (Node.js CLI)
+
+`server.js` provides a JSON-line IPC server — reads JSON requests from stdin, writes JSON responses to stdout. Supports these actions:
+
+| Action | Description |
+|--------|-------------|
+| `insert` | `{action:"insert", text:"..."}` → chunk, embed, extract entities |
+| `query` | `{action:"query", question, mode, systemPrompt, history}` → LLM response |
+| `graph` | Returns `{nodes, edges}` |
+| `progress` | Returns `{total, ready, isInserting, isReady}` |
+| `reset` | Clear all data and storage |
+| `save` | Persist to `$LIGHTRAG_STORAGE` (default `/tmp/blackboardlm_rag.json`) |
+| `load` | Restore from saved file |
+
+**Environment variables**: `TRANSFORMERS_JS_MODEL`, `DEEPSEEK_API_KEY`, `DEEPSEEK_BASE_URL`, `LLM_MODEL`, `LIGHTRAG_STORAGE`, `LLM_MAX_TOKENS`, `LLM_THINKING`, `LLM_REASONING_EFFORT`.
 
 ## License
 

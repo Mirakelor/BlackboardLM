@@ -1,17 +1,17 @@
 import json
+import os
 
-import BlackboardLM.config.settings as _s
 
 def _build_config():
     return {
-        "apiKey": _s.DEEPSEEK_API_KEY or "",
-        "baseUrl": _s.DEEPSEEK_BASE_URL,
-        "model": _s.LLM_MODEL,
-        "thinking": _s.LLM_THINKING,
-        "reasoningEffort": _s.LLM_REASONING_EFFORT,
-        "maxTokens": _s.LLM_MAX_TOKENS,
-        "proxyUrl": "/api/hf-proxy",
+        "apiKey": os.environ.get("DEEPSEEK_API_KEY", ""),
+        "baseUrl": os.environ.get("DEEPSEEK_BASE_URL", "https://api.deepseek.com"),
+        "model": os.environ.get("LLM_MODEL", "deepseek-v4-flash"),
+        "thinking": os.environ.get("LLM_THINKING", "disabled"),
+        "reasoningEffort": os.environ.get("LLM_REASONING_EFFORT", "max"),
+        "maxTokens": int(os.environ.get("LLM_MAX_TOKENS", "16384")),
     }
+
 
 def get_llm_config_json():
     return json.dumps(_build_config(), ensure_ascii=False)

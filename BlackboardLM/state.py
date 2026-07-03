@@ -1,6 +1,8 @@
 import asyncio
 import hashlib
 import json
+import os
+import re
 import tempfile
 from dataclasses import asdict
 from pathlib import Path
@@ -23,7 +25,7 @@ class AppState(rx.State):
     chat_messages: list[dict] = []
     current_input: str = ""
     is_processing: bool = False
-    theme_name: str = _s.THEME
+    theme_name: str = os.environ.get("THEME", _theme.THEME_SAKURA)
     expanded_doc: str = ""
     star_chart_visible: bool = True
     parsing_files: list[str] = []
@@ -31,14 +33,14 @@ class AppState(rx.State):
     preview_content: str = ""
     preview_ready: bool = False
     settings_visible: bool = False
-    settings_api_key: str = _s.DEEPSEEK_API_KEY or ""
-    settings_model: str = _s.LLM_MODEL
-    settings_base_url: str = _s.DEEPSEEK_BASE_URL
-    settings_thinking: str = _s.LLM_THINKING
-    settings_reasoning: str = _s.LLM_REASONING_EFFORT
-    settings_max_tokens: int = _s.LLM_MAX_TOKENS
-    settings_query_mode: str = _s.QUERY_MODE
-    settings_response_type: str = _s.RESPONSE_TYPE
+    settings_api_key: str = os.environ.get("DEEPSEEK_API_KEY", "")
+    settings_model: str = os.environ.get("LLM_MODEL", "deepseek-v4-flash")
+    settings_base_url: str = os.environ.get("DEEPSEEK_BASE_URL", "https://api.deepseek.com")
+    settings_thinking: str = os.environ.get("LLM_THINKING", "disabled")
+    settings_reasoning: str = os.environ.get("LLM_REASONING_EFFORT", "max")
+    settings_max_tokens: int = int(os.environ.get("LLM_MAX_TOKENS", "16384"))
+    settings_query_mode: str = os.environ.get("QUERY_MODE", "naive")
+    settings_response_type: str = os.environ.get("RESPONSE_TYPE", "Multiple Paragraphs")
     selected_preset: str = ""
     presets_expanded: bool = False
     settings_saved: bool = False
@@ -48,8 +50,9 @@ class AppState(rx.State):
     login_password: str = ""
     login_error: str = ""
     _on_load_done: bool = False
-    _pending_files: list = []
     _uploaded_hashes: set = set()
+    pending_file_paths: list[str] = []
+    pending_file_names: list[str] = []
     rag_doc_counter: int = 0
     rag_doc_text: str = ""
     rag_query_counter: int = 0
@@ -126,7 +129,8 @@ class AppState(rx.State):
         _path = _PREVIEW_DIR.joinpath(f"{_hash}.txt")
         _loop = asyncio.get_running_loop()
         if await _loop.run_in_executor(None, _path.exists):
-            self.preview_content = await _loop.run_in_executor(None, _path.read_text, "utf-8")
+            _text = await _loop.run_in_executor(None, _path.read_text, "utf-8")
+            self.preview_content = re.sub(r'!\[[^\]]*\]\([^)]*\)', '', _text)
             self.preview_ready = True
 
     @rx.event
@@ -152,13 +156,17 @@ class AppState(rx.State):
             _pending.append((_tmp_path, _file.filename))
         if not _pending:
             return
-        self._pending_files = _pending
-        asyncio.create_task(self._process_files())
+        self.pending_file_paths = [p[0] for p in _pending]
+        self.pending_file_names = [p[1] for p in _pending]
+        return AppState.process_files_background
 
-    async def _process_files(self):
+    @rx.event(background=True)
+    async def process_files_background(self):
         _loop = asyncio.get_running_loop()
         _full_texts = []
-        for _tmp_path, _filename in self._pending_files:
+        for _i in range(len(self.pending_file_paths)):
+            _tmp_path = self.pending_file_paths[_i]
+            _filename = self.pending_file_names[_i]
             _name_hash = hashlib.md5(_filename.encode()).hexdigest()[:16]
             _path = _PREVIEW_DIR.joinpath(f"{_name_hash}.txt")
             try:
@@ -173,6 +181,8 @@ class AppState(rx.State):
             async with self:
                 self.rag_doc_text = _combined
                 self.rag_doc_counter += 1
+                self.pending_file_paths = []
+                self.pending_file_names = []
 
     @rx.event
     async def send_message(self):

@@ -8,12 +8,10 @@
   let _lastQueryCounter = '0';
   let _lastResetCounter = '0';
   let _lastConfigHash = '';
-  let _backendOrigin = '';
   let _statusBar = null;
   let _statusText = null;
   let _statusSpinner = null;
   let _statusBarFill = null;
-  let _docCheckCount = 0;
 
   let _themePrimary = '#d4838f';
   let _themeBg = '#fffaf2';
@@ -55,12 +53,6 @@
     _statusSpinner = document.getElementById('rag-status-spinner');
     _statusBarFill = document.getElementById('rag-status-bar-fill');
     _applyTheme();
-    console.log('[rag_bridge] Status DOM elements:', {
-      bar: !!_statusBar,
-      text: !!_statusText,
-      spinner: !!_statusSpinner,
-      fill: !!_statusBarFill,
-    });
   }
 
   function _showStatus(msg, progress, isError) {
@@ -102,7 +94,6 @@
   }
 
   function _setReady() {
-    console.log('[rag_bridge] Worker ready, flushing', _readyCallbacks.length, 'callbacks');
     _ready = true;
     const _cbs = _readyCallbacks;
     _readyCallbacks = [];
@@ -149,11 +140,9 @@
   }
 
   function _initWorker() {
-    console.log('[rag_bridge] _initWorker start');
-    if (_worker) { console.log('[rag_bridge] Worker already exists'); return; }
+    if (_worker) return;
     try {
       _worker = new Worker('/rag.worker.js', { type: 'module' });
-      console.log('[rag_bridge] Worker created');
     } catch (_e) {
       console.error('[rag_bridge] Worker creation FAILED:', _e.message);
       _showStatus('Failed to start RAG engine: ' + _e.message, undefined, true);
@@ -163,7 +152,6 @@
     _worker.onmessage = (_e) => {
       const { type } = _e.data;
       const _data = _e.data;
-      console.log('[rag_bridge] Worker message:', type, _data);
 
       if (type === 'ready') {
         _setReady();
@@ -225,50 +213,19 @@
       _showStatus('RAG engine error: ' + _e.message, undefined, true);
     };
 
-    fetch('/env.json')
-      .then(_r => _r.json())
-      .then(_env => {
-        const _configEl = document.getElementById('rag-llm-config');
-        console.log('[rag_bridge] Config element found:', !!_configEl);
-        if (_configEl) {
-          try {
-            const _cfg = JSON.parse(_configEl.textContent);
-            delete _cfg._configChanged;
-            const _pingUrl = _env.PING || _env.ping || '';
-            _backendOrigin = self.location.origin;
-            try { if (_pingUrl) _backendOrigin = new URL(_pingUrl).origin; } catch (_e) {}
-            _cfg.proxyUrl = _backendOrigin + '/api/hf-proxy';
-            _lastConfigHash = JSON.stringify(_cfg);
-            console.log('[rag_bridge] Backend origin:', _backendOrigin);
-            console.log('[rag_bridge] Sending config to worker:', _cfg);
-            _worker.postMessage({ type: 'set_config', data: _cfg });
-          } catch (_e) {
-            console.error('[rag_bridge] Config parse error:', _e.message);
-          }
-        }
-
-        console.log('[rag_bridge] Sending init to worker');
-        _worker.postMessage({ type: 'init' });
-      })
-      .catch(() => {
-        console.log('[rag_bridge] env.json fetch failed, using location.origin');
-        _backendOrigin = self.location.origin;
-        const _configEl = document.getElementById('rag-llm-config');
-        if (_configEl) {
-          try {
-            const _cfg = JSON.parse(_configEl.textContent);
-            delete _cfg._configChanged;
-            _cfg.proxyUrl = _backendOrigin + '/api/hf-proxy';
-            _lastConfigHash = JSON.stringify(_cfg);
-            console.log('[rag_bridge] Sending config to worker (fallback):', _cfg);
-            _worker.postMessage({ type: 'set_config', data: _cfg });
-          } catch (_e) {
-            console.error('[rag_bridge] Config parse error:', _e.message);
-          }
-        }
-        console.log('[rag_bridge] Sending init to worker (fallback)');
-        _worker.postMessage({ type: 'init' });
-      });
+    const _configEl = document.getElementById('rag-llm-config');
+    if (_configEl) {
+      try {
+        const _cfg = JSON.parse(_configEl.textContent);
+        delete _cfg._configChanged;
+        _cfg.proxyUrl = 'https://huggingface.co';
+        _lastConfigHash = JSON.stringify(_cfg);
+        _worker.postMessage({ type: 'set_config', data: _cfg });
+      } catch (_e) {
+        console.error('[rag_bridge] Config parse error:', _e.message);
+      }
+    }
+    _worker.postMessage({ type: 'init' });
   }
 
   function _waitForDOM(_cb) {
@@ -280,7 +237,6 @@
     const _timer = setInterval(function () {
       _tries++;
       if (document.getElementById('rag-status-bar') && window.__reflex) {
-        console.log('[rag_bridge] DOM ready after', _tries, 'tries');
         clearInterval(_timer);
         _cb();
         return;
@@ -294,23 +250,16 @@
   }
 
   function _checkDocSignal() {
-    _docCheckCount++;
     const _counterEl = document.getElementById('rag-doc-counter');
-    if (!_counterEl) {
-      if (_docCheckCount <= 3) console.log('[rag_bridge] _checkDocSignal: element not found');
-      return;
-    }
+    if (!_counterEl) return;
     const _val = _counterEl.textContent || '';
-    if (_docCheckCount <= 3) console.log('[rag_bridge] _checkDocSignal #' + _docCheckCount + ': val=' + _val + ' last=' + _lastDocCounter);
     if (_val === _lastDocCounter || !_val || _val === '0') return;
-    console.log('[rag_bridge] Doc signal changed:', _lastDocCounter, '->', _val);
     _lastDocCounter = _val;
     const _textEl = document.getElementById('rag-doc-text');
-    if (!_textEl) { console.log('[rag_bridge] _checkDocSignal: text element not found'); return; }
+    if (!_textEl) return;
     const _text = _textEl.textContent || '';
-    if (!_text) { console.log('[rag_bridge] _checkDocSignal: text is empty'); return; }
+    if (!_text) return;
     _onReady(function () {
-      console.log('[rag_bridge] Sending insert to worker, text length:', _text.length);
       _worker.postMessage({ type: 'insert', data: { text: _text } });
     });
   }
@@ -320,14 +269,12 @@
     if (!_counterEl) return;
     const _val = _counterEl.textContent || '';
     if (_val === _lastQueryCounter || !_val || _val === '0') return;
-    console.log('[rag_bridge] Query signal changed:', _lastQueryCounter, '->', _val);
     _lastQueryCounter = _val;
     const _paramsEl = document.getElementById('rag-query-params');
-    if (!_paramsEl) { console.log('[rag_bridge] _checkQuerySignal: params element not found'); return; }
+    if (!_paramsEl) return;
     try {
       const _params = JSON.parse(_paramsEl.textContent || '{}');
       _onReady(function () {
-        console.log('[rag_bridge] Sending query to worker:', _params.question?.slice(0, 50));
         _worker.postMessage({ type: 'query', data: _params });
       });
     } catch (_e) {
@@ -340,7 +287,6 @@
     if (!_counterEl) return;
     const _val = _counterEl.textContent || '';
     if (_val === _lastResetCounter || !_val || _val === '0') return;
-    console.log('[rag_bridge] Reset signal changed:', _lastResetCounter, '->', _val);
     _lastResetCounter = _val;
     _onReady(function () {
       _worker.postMessage({ type: 'reset' });
@@ -353,12 +299,9 @@
     try {
       const _cfg = JSON.parse(_configEl.textContent);
       delete _cfg._configChanged;
-      if (_cfg.proxyUrl && _cfg.proxyUrl.startsWith('/')) {
-        _cfg.proxyUrl = _backendOrigin + _cfg.proxyUrl;
-      }
+      _cfg.proxyUrl = 'https://huggingface.co';
       const _hash = JSON.stringify(_cfg);
       if (_hash !== _lastConfigHash) {
-        console.log('[rag_bridge] Config changed');
         _lastConfigHash = _hash;
         _worker.postMessage({ type: 'set_config', data: _cfg });
       }

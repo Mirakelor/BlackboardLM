@@ -60,3 +60,10 @@ parsed_images/
 
 # ZIPs
 *.zip
+
+# Agent
+.claude
+.remember
+
+# VSCode
+.vscode/

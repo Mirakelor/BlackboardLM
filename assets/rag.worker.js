@@ -23,7 +23,7 @@ let _llmConfig = {
   thinking: 'disabled',
   reasoningEffort: 'max',
   maxTokens: 16384,
-  proxyUrl: '/api/hf-proxy',
+  proxyUrl: 'https://huggingface.co',
 };
 
 const ENTITY_EXTRACTION_PROMPT = `---Role---
@@ -457,7 +457,6 @@ async function _streamLLM(messages) {
 }
 
 async function _init(opts = {}) {
-  console.log('[rag.worker] _init called, opts:', { apiKey: opts.apiKey ? '***' : '(empty)', baseUrl: opts.baseUrl, model: opts.model });
   if (opts.apiKey) _llmConfig.apiKey = opts.apiKey;
   if (opts.baseUrl) _llmConfig.baseUrl = opts.baseUrl;
   if (opts.model) _llmConfig.model = opts.model;
@@ -467,25 +466,19 @@ async function _init(opts = {}) {
   if (opts.proxyUrl) { _llmConfig.proxyUrl = opts.proxyUrl; env.remoteHost = opts.proxyUrl; }
 
   if (_pipe) {
-    console.log('[rag.worker] _init: already initialized');
     return { alreadyInit: true };
   }
 
   const _start = Date.now();
-  console.log('[rag.worker] Loading model:', _MODEL);
   _pipe = await pipeline('feature-extraction', _MODEL, {
     dtype: 'fp32',
     progress_callback: (_info) => {
       if (_info.status === 'progress' && _info.total) {
         const _pct = Math.round(_info.loaded * 100 / _info.total);
-        if (_info.loaded % 5 === 0 || _pct === 100) {
-          console.log('[rag.worker] Model download:', _pct + '%', _info.file || '');
-        }
         self.postMessage({ type: 'init_progress', loaded: _info.loaded, total: _info.total, file: _info.file });
       }
     },
   });
-  console.log('[rag.worker] Model loaded in', Date.now() - _start, 'ms');
   _embedder = new Embedder(_pipe);
 
   const _loaded = await _loadState();
@@ -522,39 +515,30 @@ async function _handleQuery(data) {
 
 self.onmessage = async (_e) => {
   const { type, data } = _e.data;
-  console.log('[rag.worker] Received:', type, data ? Object.keys(data) : null);
   try {
     switch (type) {
       case 'init':
-        console.log('[rag.worker] Init start');
         await _init(data);
-        console.log('[rag.worker] Init done, pipe:', !!_pipe, 'rag:', !!_rag, 'vdb_size:', _rag ? _rag.vdbSize : 0);
         break;
       case 'insert':
         if (!_rag) throw new Error('RAG not initialized. Send "init" first.');
-        console.log('[rag.worker] Insert start, text length:', (data.text || '').length);
         await _rag.insert(data.text);
         await _saveState();
         self.postMessage({ type: 'insert_done', graph: _rag.getGraphData() });
-        console.log('[rag.worker] Insert done, vdb_size:', _rag.vdbSize);
         break;
       case 'query':
-        console.log('[rag.worker] Query start:', (data.question || '').slice(0, 50));
         await _handleQuery(data || {});
         self.postMessage({ type: 'done' });
-        console.log('[rag.worker] Query done');
         break;
       case 'graph':
         if (_rag) {
           const _g = _rag.getGraphData();
-          console.log('[rag.worker] Graph:', _g.nodes.length, 'nodes,', _g.edges.length, 'edges');
           self.postMessage({ type: 'graph', ..._g });
         } else {
           self.postMessage({ type: 'graph', nodes: [], edges: [] });
         }
         break;
       case 'reset':
-        console.log('[rag.worker] Reset');
         _rag = null;
         if (_embedder && _pipe) {
           _rag = new LightRAG({
@@ -571,7 +555,6 @@ self.onmessage = async (_e) => {
         self.postMessage({ type: 'reset_done' });
         break;
       case 'set_config':
-        console.log('[rag.worker] set_config, apiKey:', data.apiKey ? '***' : '(empty)');
         if (data.apiKey !== undefined) _llmConfig.apiKey = data.apiKey;
         if (data.baseUrl !== undefined) _llmConfig.baseUrl = data.baseUrl;
         if (data.model !== undefined) _llmConfig.model = data.model;
@@ -582,11 +565,9 @@ self.onmessage = async (_e) => {
         self.postMessage({ type: 'config_set' });
         break;
       default:
-        console.error('[rag.worker] Unknown action:', type);
         self.postMessage({ type: 'error', message: `Unknown action: ${type}` });
     }
   } catch (_err) {
-    console.error('[rag.worker] Error:', _err.message, _err.stack);
     self.postMessage({ type: 'error', message: _err.message });
   }
 };
