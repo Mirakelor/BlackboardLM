@@ -9,22 +9,22 @@ Built with [Reflex](https://reflex.dev), powered by [MarkitDown](https://github.
 ### 🗺️ Table of Contents
 
 - [Features](#features)
-- [Tech Stack](#tech-stack)
-- [Project Structure](#project-structure)
-- [Getting Started](#getting-started)
-- [Deploy to Reflex Cloud](#-deploy-to-reflex-cloud)
+- [Tech Stack](#-tech-stack)
+- [Project Structure](#-project-structure)
+- [Getting Started](#-getting-started)
+- [Deploy to Reflex Cloud](#%EF%B8%8F-deploy-to-reflex-cloud)
 - [Usage](#usage)
-  - [Authentication](#authentication)
-  - [Uploading Documents](#uploading-documents)
-  - [Asking Questions](#asking-questions)
-  - [Knowledge Graph](#knowledge-graph)
-  - [Preset Modes](#preset-modes)
-  - [Query Strategies](#query-strategies)
-  - [Themes](#themes)
-  - [Settings Panel](#settings-panel)
-- [Configuration](#configuration)
-- [Prompt System](#prompt-system)
-- [License](#license)
+  - [Authentication](#-authentication)
+  - [Uploading Documents](#-uploading-documents)
+  - [Asking Questions](#-asking-questions)
+  - [Knowledge Graph](#%EF%B8%8F-knowledge-graph-1)
+  - [Preset Modes](#%EF%B8%8F-preset-modes)
+  - [Query Strategies](#-query-strategies)
+  - [Themes](#-themes)
+  - [Settings Panel](#%EF%B8%8F-settings-panel-1)
+- [Configuration](#-configuration)
+- [Prompt System](#-prompt-system)
+- [License](#-license)
 
 ---
 
@@ -237,15 +237,17 @@ reflex deploy --project <your-project-id>
 
 Press Enter at the interactive prompts. The CLI compiles your app, uploads it, and the build continues in the background. You can close the terminal once the upload finishes.
 
-### Step 3 — Configure your API key
+### Step 3 — Set your API key (recommended: deploy with `--env`)
 
-Once deployed, open your app and click the gear icon in the header to open the **Settings** panel. Fill in your `DEEPSEEK_API_KEY` and click **Save & Apply** — settings take effect immediately, no restart needed.
-
-You can also set environment variables from the Cloud dashboard under **Settings** → **API Keys**, or pass them at deploy time with `--env`:
+**Recommended** — pass it at deploy time:
 
 ```bash
 reflex deploy --project <id> --env DEEPSEEK_API_KEY=sk-your-key
 ```
+
+This bakes the key into the deployment so it survives backend restarts. Environment variables persist across re-deploys.
+
+**Alternative** — use the in-app **Settings** panel. Click the gear icon, fill in your API key, and click **Save & Apply**. Changes take effect immediately. However, note that on the free tier the backend restarts periodically, which clears session-stored settings. Using `--env` avoids this.
 
 ### Step 4 — Update your app
 
